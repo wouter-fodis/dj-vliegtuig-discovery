@@ -504,6 +504,7 @@ const I18N = {
     mailSubject:'Mijn ontdekkingen met DJ VLIEGTUIG',
     mailIntro:'Deze muziek ontdekte ik met de vliegtuigen boven me:',
     mailMore:'\u2026 en nog {n} nummers.',
+    copyIntro:'Deze muziek ontdekte ik met DJ VLIEGTUIG DISCOVERY:',
   },
   en: {
     pickSpot:'Choose a spot or airport', useGps:'Use my location', soundOn:'Start sound', soundOff:'Sound off',
@@ -603,6 +604,7 @@ const I18N = {
     mailSubject:'My discoveries with DJ VLIEGTUIG',
     mailIntro:'I discovered this music with the planes flying over me:',
     mailMore:'\u2026 and {n} more tracks.',
+    copyIntro:'I discovered this music with DJ VLIEGTUIG DISCOVERY:',
   },
   de: {
     pickSpot:'Ort oder Flughafen w\u00e4hlen', useGps:'Meinen Standort verwenden', soundOn:'Ton starten', soundOff:'Ton aus',
@@ -702,6 +704,7 @@ const I18N = {
     mailSubject:'Meine Entdeckungen mit DJ VLIEGTUIG',
     mailIntro:'Diese Musik habe ich mit den Flugzeugen \u00fcber mir entdeckt:',
     mailMore:'\u2026 und {n} weitere Titel.',
+    copyIntro:'Diese Musik habe ich mit DJ VLIEGTUIG DISCOVERY entdeckt:',
   },
 };
 const LANGS = ['nl', 'en', 'de'];
@@ -2430,7 +2433,7 @@ function mailLink(){
   let n = 0;
   for (const f of favs){
     const link = f.ytUrl || f.spotifyUrl || f.appleUrl || '';
-    const block = [`${f.artist} – ${f.title} (${countryName(f.iso)})`].concat(link ? [link] : [], ['']);
+    const block = [`${f.artist} \u2013 ${f.title} (${countryName(f.iso)})`].concat(link ? [link] : [], ['']);
     if ((lines.join('\n') + block.join('\n')).length > 1200){ lines.push(t('mailMore', {n: favs.length - n}), ''); break; }
     lines.push(...block); n++;
   }
@@ -2438,7 +2441,7 @@ function mailLink(){
   return `mailto:?subject=${encodeURIComponent(t('mailSubject'))}&body=${encodeURIComponent(lines.join('\n'))}`;
 }
 $('copyFavs').onclick = () => {
-  const txt = favs.map(f => `${f.artist} \u2013 ${f.title}`).join('\n');
+  const txt = [t('copyIntro'), '', ...favs.map(f => `${f.artist} \u2013 ${f.title}`), '', `${location.origin}${location.pathname}`].join('\n');
   navigator.clipboard?.writeText(txt).then(() => {
     const b = $('copyFavs'); b.textContent = t('copied');
     setTimeout(() => { b.textContent = t('copyList'); }, 1800);
