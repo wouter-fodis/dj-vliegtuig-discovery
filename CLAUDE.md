@@ -26,9 +26,10 @@ Dezelfde als bij RADIO:
 
 1. **De dj:** het dichtstbijzijnde toestel binnen je straal met een bekende route. Land via `anthemTarget` (vertrekker: bestemming; lander: herkomst). Het land blijft draaien tot er een toestel uit een ander land binnen je straal komt.
 2. **Artiest zoeken** (`artistsFor`): MusicBrainz-zoekopdracht `country:XX AND tag:"genre"`, eerste 100 plus soms een willekeurige diepere pagina, zodat je ook onbekende artiesten krijgt.
-3. **Fragment** (`trackFor`): iTunes Search API, alleen treffers waarvan de artiestnaam precies overeenkomt en die een `previewUrl` hebben (30 s). Eerst de winkel van dat land, dan de VS.
+3. **Fragment** (`trackFor`): iTunes Search API, alleen treffers waarvan de artiestnaam precies overeenkomt en die een `previewUrl` hebben (30 s). Eerst de winkel van dat land, dan de VS. Dit levert titel, hoes en het reservefragment.
+3b. **Heel nummer** (`youtubeFor`): YouTube Data API-zoekopdracht "artiest titel" (embeddable, categorie Muziek), treffer moet titel en artiest bevatten. Afspelen via de YouTube IFrame-speler in de kaart (`ensurePlayer`, `playYT`). Geen video, foutmelding van de speler, of start hij niet binnen 6 s vanzelf (iPhone)? Dan speelt het iTunes-fragment (`playAudio`) met de melding "Tik op de video". Tikt iemand op de video, dan neemt die het over (`ytState`). Faalt de zoekopdracht (geen sleutel, quotum op), dan tien minuten alleen fragmenten (`ytOffUntil`).
 4. **Volgorde** (`discover`): nieuwe artiest in jouw genre, anders iets anders uit dat land (met melding), anders mag een eerder gehoorde artiest terugkomen.
-5. **Doorspelen:** is een fragment af, dan volgt de volgende artiest uit hetzelfde land. Twee audio-elementen voor crossfades (iOS: harde wissel, volume werkt daar niet).
+5. **Doorspelen:** is een nummer of fragment af, dan volgt de volgende artiest uit hetzelfde land. Twee audio-elementen voor crossfades (iOS: harde wissel, volume werkt daar niet).
 6. **Klaarzetten** (`prefetch`/`ready`): voor het toestel op het bord wordt alvast een artiest gezocht. Dat zie je bij "Hierna:".
 7. **Spotify zonder login:** de MusicBrainz-link naar het Spotify-artiestprofiel (`url-rels`) geeft een knop "Luister verder in Spotify" met de artiest-embed. Wie in de browser bij Spotify is ingelogd, hoort daar hele nummers, anders fragmenten. Zonder link is er een zoeklink naar Spotify. Zolang de embed open is, staat de dj uit; "Terug naar live" zet hem weer aan.
 8. **Bewaren:** ♥ bewaart een nummer in `localStorage` (`discFavs`), alleen in die browser. "Kopieer lijst" zet "Artiest – Titel"-regels op het klembord.
@@ -45,9 +46,12 @@ Alles van RADIO (vluchten, routes, Wikidata, Wereldbank, Frankfurter, Big Mac, A
 | Bron | Waarvoor | Cache |
 |---|---|---|
 | musicbrainz.org | Artiesten per land en genre, Spotify-link per artiest | 1 dag, max 1 verzoek/s |
-| itunes.apple.com | Fragmenten van 30 s, hoes, link naar Apple Music | 1 dag |
+| itunes.apple.com | Titel, hoes, reservefragment van 30 s, link naar Apple Music | 1 dag |
+| www.googleapis.com (alleen `/youtube/v3/search`) | Video-ID voor het hele nummer | 1 week |
 
 Radio-browser en de ICY-radiotekst zijn eruit gehaald.
+
+**YouTube-sleutel:** staat NIET in de repo. `proxy.php` leest hem uit `/home/fodis/.discovery-youtube-key` (één regel) en plakt hem achter de zoekopdracht; de cache gebruikt de URL zonder sleutel. Zonder sleutelbestand geeft de proxy 503 en speelt de app fragmenten. Quotum: 10.000 eenheden per dag, een zoekopdracht kost er 100, dus ongeveer 100 nieuwe zoekopdrachten per dag voor alle gebruikers samen (de weekcache helpt).
 
 **Risico:** de iTunes Search API staat ongeveer 20 verzoeken per minuut per IP toe, en alles gaat via het IP van de server. Bij veel gebruikers tegelijk kan dat knellen. Oplossing als het nodig is: iTunes rechtstreeks vanuit de browser aanroepen (die API ondersteunt JSONP), dan telt het per gebruiker.
 
