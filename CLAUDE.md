@@ -39,6 +39,7 @@ Dezelfde als bij RADIO:
 9. Genre in `localStorage` (`discGenre`).
 10. **Menu** bovenin: RADIO (/fly/) en DISCOVER, met slogan per taal (`tagRadio`, `tagDiscover`). Staat ook in de RADIO-app.
 11. **Delen** (`shareLink`, `applyShared`): knop "Deel" maakt een link met `spot=<baankop-id>` of `at=lat,lon` (afgerond op 3 decimalen, ~100 m) plus `name`, `r` (straal), `genre` en `years=1985-1999`. Een gedeelde link gaat voor op opgeslagen instellingen. Op telefoons het deelmenu van het toestel, anders naar het klembord.
+13. **Banen op de radar:** elke baankop is een stip met de kopnaam en is klikbaar (`radarHits`, klik → `selectSpot`). **In gebruik** (`trackRunways`, elke seconde): kwam er de laatste 10 minuten een toestel onder 2500 ft binnen 1,5 km over de kop, in de lijn van de baan, dan is de stip geel en staat er "in gebruik" achter de baan in de keuzelijst. Vertrekkers die over de andere kop klimmen tellen ook mee voor die kop.
 12. **Layout:** linkerkolom vlucht, radar, landinfo (radar boven de landinfo).
 
 ## Waarom geen Spotify-API
