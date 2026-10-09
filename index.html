@@ -224,7 +224,9 @@
   .sp-embed{margin:0 0 14px}
   .sp-embed iframe{border:0;border-radius:12px;display:block}
   .up-next{margin:0 0 14px;font-size:.9rem;color:var(--muted)}
-  .finds-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .finds-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .finds-tools{display:flex;gap:8px}
+  .finds-tools a.btn{text-decoration:none;display:inline-flex;align-items:center}
   ol.favs{list-style:none;margin:0;padding:0}
   ol.favs li{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--asphalt-2)}
   ol.favs li.empty{color:var(--muted);display:block}
@@ -382,7 +384,10 @@
       <section class="finds">
         <div class="finds-head">
           <h2 data-i18n="myFinds">Mijn ontdekkingen</h2>
-          <button class="btn" id="copyFavs" type="button" hidden data-i18n="copyList">Kopieer lijst</button>
+          <div class="finds-tools">
+            <a class="btn" id="mailFavs" hidden>&#9993; <span data-i18n="mailList">Mail lijst</span></a>
+            <button class="btn" id="copyFavs" type="button" hidden data-i18n="copyList">Kopieer lijst</button>
+          </div>
         </div>
         <ol class="favs" id="favs"></ol>
         <p class="src-note" data-i18n="srcNote"></p>
@@ -495,6 +500,10 @@ const I18N = {
     linkCopied:'Link gekopieerd!',
     sharedSpot:'Gedeelde plek',
     shareText:'Ontdek muziek met DJ VLIEGTUIG',
+    mailList:'Mail lijst',
+    mailSubject:'Mijn ontdekkingen met DJ VLIEGTUIG',
+    mailIntro:'Deze muziek ontdekte ik met de vliegtuigen boven me:',
+    mailMore:'\u2026 en nog {n} nummers.',
   },
   en: {
     pickSpot:'Choose a spot or airport', useGps:'Use my location', soundOn:'Start sound', soundOff:'Sound off',
@@ -590,6 +599,10 @@ const I18N = {
     linkCopied:'Link copied!',
     sharedSpot:'Shared spot',
     shareText:'Discover music with DJ VLIEGTUIG',
+    mailList:'Email list',
+    mailSubject:'My discoveries with DJ VLIEGTUIG',
+    mailIntro:'I discovered this music with the planes flying over me:',
+    mailMore:'\u2026 and {n} more tracks.',
   },
   de: {
     pickSpot:'Ort oder Flughafen w\u00e4hlen', useGps:'Meinen Standort verwenden', soundOn:'Ton starten', soundOff:'Ton aus',
@@ -685,6 +698,10 @@ const I18N = {
     linkCopied:'Link kopiert!',
     sharedSpot:'Geteilter Ort',
     shareText:'Entdecke Musik mit DJ VLIEGTUIG',
+    mailList:'Liste mailen',
+    mailSubject:'Meine Entdeckungen mit DJ VLIEGTUIG',
+    mailIntro:'Diese Musik habe ich mit den Flugzeugen \u00fcber mir entdeckt:',
+    mailMore:'\u2026 und {n} weitere Titel.',
   },
 };
 const LANGS = ['nl', 'en', 'de'];
@@ -2303,7 +2320,8 @@ function renderFavBtn(){
 }
 function renderFavs(){
   const ol = $('favs'); ol.innerHTML = '';
-  $('copyFavs').hidden = !favs.length;
+  $('copyFavs').hidden = $('mailFavs').hidden = !favs.length;
+  $('mailFavs').href = mailLink();
   if (!favs.length){ ol.append(el('li', 'empty', t('noFinds'))); return; }
   favs.forEach((f, i) => {
     const li = el('li', 'fav');
@@ -2405,6 +2423,20 @@ $('genre').onchange = e => setDiscGenre(e.target.value);
 $('favBtn').onclick = () => toggleFav(nowDisc);
 $('nextBtn').onclick = () => { if (spotifyOpen) backToLive(); if (lastLead) playNext(); };
 $('spPlay').onclick = openSpotify;
+/* Lijst mailen: opent het eigen mailprogramma met onderwerp en tekst ingevuld (mailto).
+   Sommige mailprogramma's knippen lange links af, dus de tekst blijft onder ~1200 tekens (~2000 in de link). */
+function mailLink(){
+  const lines = [t('mailIntro'), ''];
+  let n = 0;
+  for (const f of favs){
+    const link = f.ytUrl || f.spotifyUrl || f.appleUrl || '';
+    const block = [`${f.artist} – ${f.title} (${countryName(f.iso)})`].concat(link ? [link] : [], ['']);
+    if ((lines.join('\n') + block.join('\n')).length > 1200){ lines.push(t('mailMore', {n: favs.length - n}), ''); break; }
+    lines.push(...block); n++;
+  }
+  lines.push(`DJ VLIEGTUIG DISCOVERY: ${location.origin}${location.pathname}`);
+  return `mailto:?subject=${encodeURIComponent(t('mailSubject'))}&body=${encodeURIComponent(lines.join('\n'))}`;
+}
 $('copyFavs').onclick = () => {
   const txt = favs.map(f => `${f.artist} \u2013 ${f.title}`).join('\n');
   navigator.clipboard?.writeText(txt).then(() => {
