@@ -124,4 +124,10 @@ if ($age < $staleLimit) {
 
 http_response_code(502);
 header('Content-Type: application/json; charset=utf-8');
-echo json_encode(['error' => $err ?: "Bron gaf HTTP $code"]);
+$out = ['error' => $err ?: "Bron gaf HTTP $code"];
+// YouTube: de reden doorgeven (bijv. quotaExceeded), zodat de app kan zeggen wat er aan de hand is
+if ($host === 'www.googleapis.com' && is_string($body)) {
+    $g = json_decode($body, true);
+    if (!empty($g['error']['errors'][0]['reason'])) $out['reason'] = $g['error']['errors'][0]['reason'];
+}
+echo json_encode($out);
