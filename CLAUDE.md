@@ -2,7 +2,7 @@
 
 Zijproject van DJ VLIEGTUIG RADIO (`wouter-fodis/vlieg`, live op https://fodis.nl/fly/). Zelfde basis: het vliegtuig dat boven je komt, bepaalt het land. Maar in plaats van radio of volkslied ontdek je hier nieuwe muziek: elk vliegtuig brengt een artiest uit zijn land mee, in het genre dat jij kiest.
 
-Live (zodra de cron draait): https://fodis.nl/discovery/ · Repo: `wouter-fodis/dj-vliegtuig-discovery` (publiek, geen geheimen erin).
+Live (zodra de cron draait): https://fodis.nl/dj-vliegtuig-discovery/ · Repo: `wouter-fodis/dj-vliegtuig-discovery` (publiek, geen geheimen erin).
 
 **Wijzigingen voor Discovery horen in deze repo, niet in `vlieg`.**
 
@@ -57,7 +57,7 @@ Hetzelfde principe als RADIO, maar een eigen script en eigen map:
 1. Zet `deploy/deploy-discovery.php` op de server als `/home/fodis/deploy-discovery.php`.
 2. Cronjob (DirectAdmin, gebruiker `fodis`), elke minuut:
    `/usr/local/bin/php -q /home/fodis/deploy-discovery.php >> /home/fodis/deploy-discovery.log 2>&1`
-3. Het script maakt `public_html/discovery/` zelf aan en zet daar `index.html` en `proxy.php` neer. Laatste commit in `/home/fodis/.deploy-discovery-commit`.
+3. Het script maakt `public_html/dj-vliegtuig-discovery/` zelf aan en zet daar `index.html` en `proxy.php` neer. Laatste commit in `/home/fodis/.deploy-discovery-commit`.
 
 ## Testen
 

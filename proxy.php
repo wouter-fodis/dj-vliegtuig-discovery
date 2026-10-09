@@ -70,7 +70,7 @@ curl_setopt_array($ch, [
     CURLOPT_CONNECTTIMEOUT => 4,
     CURLOPT_FOLLOWLOCATION => true,
     CURLOPT_MAXREDIRS      => 2,
-    CURLOPT_USERAGENT      => 'DJVliegtuigDiscovery/0.1 (https://fodis.nl/discovery; wouter@fodis.nl)', // o.a. adsb.lol en Nominatim eisen een User-Agent
+    CURLOPT_USERAGENT      => 'DJVliegtuigDiscovery/0.1 (https://fodis.nl/dj-vliegtuig-discovery/)', // o.a. adsb.lol en Nominatim eisen een User-Agent
     CURLOPT_HTTPHEADER     => [$isCsv ? 'Accept: text/csv,text/plain' : 'Accept: application/json'],
 ]);
 $body = curl_exec($ch);

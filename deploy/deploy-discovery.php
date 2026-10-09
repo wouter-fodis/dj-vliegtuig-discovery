@@ -1,5 +1,5 @@
 <?php
-// Haalt de nieuwste versie van DJ Vliegtuig Discovery van GitHub en zet die in public_html/discovery.
+// Haalt de nieuwste versie van DJ Vliegtuig Discovery van GitHub en zet die in public_html/dj-vliegtuig-discovery.
 // Draait elke minuut via een cronjob. Zet dit bestand NAAST public_html (dus niet erin):
 //   /home/fodis/deploy-discovery.php
 //
@@ -9,7 +9,7 @@
 
 $REPO   = 'wouter-fodis/dj-vliegtuig-discovery';
 $BRANCH = 'main';
-$TARGET = __DIR__ . '/public_html/discovery';
+$TARGET = __DIR__ . '/public_html/dj-vliegtuig-discovery';
 $STATE  = __DIR__ . '/.deploy-discovery-commit';
 $FILES  = [
     // bestand in de repo => controle dat het geen foutpagina is
