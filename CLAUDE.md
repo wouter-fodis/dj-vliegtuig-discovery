@@ -28,12 +28,17 @@ Dezelfde als bij RADIO:
 2. **Artiest zoeken** (`artistsFor`): MusicBrainz-zoekopdracht `country:XX AND tag:"genre"`, eerste 100 plus soms een willekeurige diepere pagina, zodat je ook onbekende artiesten krijgt.
 3. **Fragment** (`trackFor`): iTunes Search API, alleen treffers waarvan de artiestnaam precies overeenkomt en die een `previewUrl` hebben (30 s). Eerst de winkel van dat land, dan de VS. Dit levert titel, hoes en het reservefragment.
 3b. **Heel nummer** (`youtubeFor`): YouTube Data API-zoekopdracht "artiest titel" (embeddable, categorie Muziek), treffer moet titel en artiest bevatten. Afspelen via de YouTube IFrame-speler in de kaart (`ensurePlayer`, `playYT`). Geen video, foutmelding van de speler, of start hij niet binnen 6 s vanzelf (iPhone)? Dan speelt het iTunes-fragment (`playAudio`) met de melding "Tik op de video". Tikt iemand op de video, dan neemt die het over (`ytState`). Faalt de zoekopdracht (geen sleutel, quotum op), dan tien minuten alleen fragmenten (`ytOffUntil`).
-4. **Volgorde** (`discover`): nieuwe artiest in jouw genre, anders iets anders uit dat land (met melding), anders mag een eerder gehoorde artiest terugkomen.
+4. **Genres en strengheid:** `GENRE_GROUPS` (77 MusicBrainz-tags in 9 groepen), `GENRE_PARENT` (subgenre → bovenliggend genre), `GENRE_LABEL` (namen in nl/de waar die afwijken). Streng: het genre moet onder de **drie belangrijkste tags** van de artiest vallen (`fitsGenre`/`underGenre`: zelfde tag, tag die op het genre eindigt zoals "indie rock" → rock, of via `GENRE_PARENT`).
+4b. **Periode:** schuif met twee knoppen (`yearFrom`/`yearTo`, 1900 tot nu, `localStorage` `discYears`). Artiest moet in die periode actief zijn (`fitsYears`: begin/einde uit MusicBrainz) en het iTunes-nummer moet in die jaren uitgebracht zijn. Let op: oude muziek staat bij iTunes vaak met de datum van een heruitgave, dus vroege periodes geven minder treffers.
+4c. **Volgorde** (`discover`): nieuwe artiest in jouw genre, dan in het bovenliggende genre (melding "dit is {p}"), daarna mag een eerder gehoorde artiest terugkomen. Nooit meer een willekeurig ander genre. Niets gevonden: het land komt in `noMusic` en de app blijft bij het land dat al speelde (`musicLead`, melding "We blijven nog even bij …").
 5. **Doorspelen:** is een nummer of fragment af, dan volgt de volgende artiest uit hetzelfde land. Twee audio-elementen voor crossfades (iOS: harde wissel, volume werkt daar niet).
 6. **Klaarzetten** (`prefetch`/`ready`): voor het toestel op het bord wordt alvast een artiest gezocht. Dat zie je bij "Hierna:".
 7. **Spotify zonder login:** de MusicBrainz-link naar het Spotify-artiestprofiel (`url-rels`) geeft een knop "Luister verder in Spotify" met de artiest-embed. Wie in de browser bij Spotify is ingelogd, hoort daar hele nummers, anders fragmenten. Zonder link is er een zoeklink naar Spotify. Zolang de embed open is, staat de dj uit; "Terug naar live" zet hem weer aan.
 8. **Bewaren:** ♥ bewaart een nummer in `localStorage` (`discFavs`), alleen in die browser. "Kopieer lijst" zet "Artiest – Titel"-regels op het klembord.
-9. Genre in `localStorage` (`discGenre`), lijst `GENRES` (MusicBrainz-tags).
+9. Genre in `localStorage` (`discGenre`).
+10. **Menu** bovenin: RADIO (/fly/) en DISCOVER, met slogan per taal (`tagRadio`, `tagDiscover`). Staat ook in de RADIO-app.
+11. **Delen** (`shareLink`, `applyShared`): knop "Deel" maakt een link met `spot=<baankop-id>` of `at=lat,lon` (afgerond op 3 decimalen, ~100 m) plus `name`, `r` (straal), `genre` en `years=1985-1999`. Een gedeelde link gaat voor op opgeslagen instellingen. Op telefoons het deelmenu van het toestel, anders naar het klembord.
+12. **Layout:** linkerkolom vlucht, radar, landinfo (radar boven de landinfo).
 
 ## Waarom geen Spotify-API
 
