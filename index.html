@@ -1796,7 +1796,7 @@ function renderPlaylist(){
     tx.append(el('small', null, countryName(e.iso, e.country)));
     what.append(tx);
     li.append(what, el('span', 't', hhmm(e.time)));
-    const playing = nowDisc && nowDisc.track.preview === e.disc.track.preview;
+    const playing = nowDisc === e.disc;
     const b = el('button', 'pl-play', playing ? '\u266b' : '\u25b6');
     b.type = 'button'; b.dataset.id = e.id;
     b.title = t('replay', {s: e.disc.track.title}); b.setAttribute('aria-label', b.title);
@@ -2185,12 +2185,57 @@ async function youtubeFor(artist, track){
 }
 let ytNote = '';                      // waarom er geen hele nummers zijn (melding onder de kaart)
 
+/* --- Wikidata: artiesten met een eigen YouTube-kanaal (P2397), dus gegarandeerd hele nummers ---
+   Genre via P136 en alle subgenres (P279*), land via P495 (herkomst) of P27 (nationaliteit). */
+const wdCache = new Map();
+function wdArtists(iso, genre){
+  const key = iso + '|' + genre;
+  if (wdCache.has(key)) return wdCache.get(key);
+  const labels = [genre, genre + ' music'].map(x => JSON.stringify(x)).join(', ');
+  const q = `SELECT DISTINCT ?a ?name ?ch ?sp ?start ?end WHERE {
+  ?country wdt:P297 "${iso}" .
+  ?root wdt:P31 wd:Q188451 ; rdfs:label|skos:altLabel ?l .
+  FILTER(LANG(?l) = "en" && LCASE(STR(?l)) IN (${labels}))
+  ?g wdt:P279* ?root .
+  ?a wdt:P136 ?g ; wdt:P2397 ?ch .
+  { ?a wdt:P495 ?country } UNION { ?a wdt:P27 ?country }
+  OPTIONAL { ?a wdt:P1902 ?sp }
+  OPTIONAL { ?a wdt:P571|wdt:P2031 ?start }
+  OPTIONAL { ?a wdt:P576|wdt:P2032 ?end }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,mul,${iso.toLowerCase()},de,fr,es,it,nl". ?a rdfs:label ?name . }
+} LIMIT 800`;
+  const p = getJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(q)).then(j => {
+    const seen = new Map();
+    for (const r of j.results?.bindings || []){
+      const id = r.a.value.split('/').pop(), ch = r.ch?.value || '';
+      if (seen.has(id) || !/^UC[\w-]{22}$/.test(ch) || /^Q\d+$/.test(r.name?.value || '')) continue;
+      seen.set(id, {id: 'wd:' + id, name: r.name.value, type: '', tags: [genre], channel: ch, sp: r.sp?.value || '',
+                    begin: (r.start?.value || '').slice(0, 4), end: (r.end?.value || '').slice(0, 4)});
+    }
+    return [...seen.values()];
+  });
+  const safe = p.catch(() => []);                     // te traag of fout: deze sessie gewoon de MusicBrainz-route
+  wdCache.set(key, safe);
+  return safe;
+}
+
 const usedArtists = new Set();
 async function discover(iso){
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const chain = genreChain(discGenre);
   // eerst nieuwe artiesten in jouw genre, dan in het bovenliggende genre; alles al gehoord? dan mag een artiest terugkomen
   for (const fresh of [true, false]) for (const genre of chain){
+    // a. artiest met eigen YouTube-kanaal (Wikidata)
+    let wd = [];
+    try { wd = await wdArtists(iso, genre); } catch(e){}
+    const pick = shuffle(wd.filter(a => fitsYears(a) && (!fresh || !usedArtists.has(a.id))))[0];
+    if (pick){
+      usedArtists.add(pick.id);
+      return {iso, artist: pick, track: {title: pick.name, album: '', art: '', preview: null, appleUrl: '', year: ''},
+              spotify: pick.sp ? {url: `https://open.spotify.com/artist/${pick.sp}`, id: pick.sp} : {url: `https://open.spotify.com/search/${encodeURIComponent(pick.name)}`, id: null},
+              list: 'UU' + pick.channel.slice(2), yt: null, genre, fallback: genre !== discGenre};
+    }
+    // b. MusicBrainz + iTunes (kanaal niet zeker)
     let list = [];
     try { list = await artistsFor(iso, genre); } catch(e){ continue; }
     const pool = shuffle(list.filter(a => fitsGenre(a, genre) && fitsYears(a) && (!fresh || !usedArtists.has(a.id)))).slice(0, 10);
@@ -2247,15 +2292,22 @@ async function playDisc(disc){
     if (nowDisc !== disc) return;
   }
   renderNow();
-  logPlay({kind: 'track', key: disc.track.preview, disc, iso: disc.iso, country: countryName(disc.iso)});
+  logPlay({kind: 'track', key: disc.list || disc.track.preview, disc, iso: disc.iso, country: countryName(disc.iso)});
   $('ytNote').textContent = !ytSrc(disc) && ytNote ? t(ytNote) : '';
   $('ytNote').hidden = !$('ytNote').textContent;
   if (ytSrc(disc)) playYT(disc); else playAudio(disc);
 }
 // wat YouTube moet spelen: de uploads van het kanaal, of een gevonden video
 const ytSrc = d => d?.list ? {list: d.list} : d?.yt ? {id: d.yt} : null;
-function playAudio(disc){
+async function playAudio(disc){
   mode = 'audio'; ytTarget = 0; ytPending = null; clearTimeout(ytWatch);
+  if (!disc.track.preview){                             // Wikidata-artiest: nu pas een iTunes-fragment zoeken
+    const tr = await trackFor(disc.artist, disc.iso).catch(() => null);
+    if (nowDisc !== disc) return;
+    if (!tr){ if (soundOn && !spotifyOpen) playNext(); return; }
+    disc.track = {...tr, title: disc.vtitle || tr.title};
+    renderNow();
+  }
   const next = decks[1 - active], prev = decks[active];
   next.el.src = disc.track.preview;
   next.el.volume = CAN_VOLUME ? 0 : 1;
@@ -2305,6 +2357,8 @@ function ytState(st){
 }
 function ytFailed(){
   if (mode !== 'yt' || !nowDisc) return;
+  const d = nowDisc;
+  if (d.list && (d.errs || 0) < 3){ d.errs = (d.errs || 0) + 1; d.vid = null; pickUpload(); return; }   // deze upload mag niet ingesloten worden: een andere
   nowDisc.yt = nowDisc.list = null; renderNow(); playAudio(nowDisc);
 }
 decks.forEach((d, i) => d.el.addEventListener('ended', () => { if (i === active && mode === 'audio' && soundOn && !spotifyOpen) playNext(); }));
@@ -2438,11 +2492,12 @@ function renderNow(){
 let favs = [];
 try { favs = JSON.parse(localStorage.getItem('discFavs') || '[]'); } catch(e){ favs = []; }
 const saveFavs = () => { try { localStorage.setItem('discFavs', JSON.stringify(favs)); } catch(e){} };
-const isFav = d => d && favs.some(f => f.preview === d.track.preview);
+const favKey = d => d.vid ? 'yt:' + d.vid : d.track.preview || d.list;   // welk nummer precies
+const isFav = d => d && favs.some(f => f.preview === favKey(d));
 function toggleFav(d){
   if (!d) return;
-  if (isFav(d)) favs = favs.filter(f => f.preview !== d.track.preview);
-  else favs.unshift({preview: d.track.preview, title: d.vtitle || d.track.title, artist: d.artist.name, iso: d.iso, art: d.track.art,
+  if (isFav(d)) favs = favs.filter(f => f.preview !== favKey(d));
+  else favs.unshift({preview: favKey(d), title: d.vtitle || d.track.title, artist: d.artist.name, iso: d.iso, art: d.track.art,
                      appleUrl: d.track.appleUrl, spotifyUrl: d.spotify.url, ytUrl: (d.vid || d.yt) ? `https://www.youtube.com/watch?v=${d.vid || d.yt}` : '', cs: lastLead?.cs || '', date: new Date().toISOString()});
   saveFavs(); renderFavBtn(); renderFavs();
 }

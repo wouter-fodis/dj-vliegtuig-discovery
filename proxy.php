@@ -90,7 +90,7 @@ if ($host === 'musicbrainz.org') {
 $ch = curl_init($fetchUrl);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT        => 10,
+    CURLOPT_TIMEOUT        => $host === 'query.wikidata.org' ? 25 : 10,   // zware Wikidata-zoekopdrachten mogen wat langer duren
     CURLOPT_CONNECTTIMEOUT => 4,
     CURLOPT_FOLLOWLOCATION => true,
     CURLOPT_MAXREDIRS      => 2,
