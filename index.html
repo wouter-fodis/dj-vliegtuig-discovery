@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DJ VLIEGTUIG DISCOVERY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt:#2b2d2f;
+    --asphalt-2:#35383b;
+    --sign-black:#000;
+    --sign-yellow:#ffc20e;
+    --runway-white:#f2f2ec;
+    --mandatory-red:#c8102e;
+    --muted:#9a9c98;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--asphalt);color:var(--runway-white);font-family:Barlow,system-ui,sans-serif;font-size:16px;line-height:1.5}
+  main{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+  .layout{display:flex;flex-direction:column;gap:22px}
+  .col{display:contents}
+  /* telefoon: vlucht, geluid, land, radar, geschiedenis */
+  .flight{order:1} .sound{order:2} .country{order:3} .radar-box{order:4} .past{order:5}
+  @media (min-width:960px){
+    .top{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:32px;align-items:end}
+    .top .controls{grid-column:1/-1}
+    .layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:32px;align-items:start}
+    .col{display:flex;flex-direction:column;gap:22px;min-width:0}
+    .flight .callsign{font-size:clamp(3.4rem,7vw,6.5rem)}
+    .flight .flag{font-size:clamp(2.6rem,5vw,4.5rem)}
+    .sound h2:first-of-type{margin-top:4px}
+  }
+  .layout h2{margin:16px 0 8px}
+  .flight .signs{margin-bottom:12px}
+  .flight .greet-rest{margin:0 0 12px}
+  .country{margin:0!important}
+  h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.9rem;line-height:1;margin:0 0 14px;color:var(--sign-yellow);letter-spacing:.04em}
+  button,select,input{font:inherit}
+  :focus-visible{outline:3px solid var(--sign-yellow);outline-offset:2px}
+
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  select,.btn{background:var(--asphalt-2);color:var(--runway-white);border:1px solid #4a4d50;border-radius:4px;padding:9px 12px;min-height:44px}
+  select{flex:1 1 220px;min-width:0;max-width:100%}
+  .brand{flex-wrap:wrap}
+  #runway{flex:1 1 200px}
+  .btn{cursor:pointer}
+  .btn.primary{background:var(--sign-yellow);color:#000;border-color:var(--sign-yellow);font-weight:500}
+
+  /* Airfield signage: black location sign + yellow direction sign */
+  .signs{display:flex;flex-direction:column;gap:0;margin-bottom:22px}
+  .sign-loc{background:var(--sign-black);border:4px solid var(--sign-yellow);border-radius:6px 6px 0 0;padding:14px 18px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:128px}
+  .callsign{font-family:"Barlow Condensed",sans-serif;font-weight:700;color:var(--sign-yellow);font-size:clamp(2.6rem,12vw,6.5rem);line-height:1;letter-spacing:.01em;overflow-wrap:anywhere;min-width:0}
+  .callsign.idle{font-size:clamp(1.8rem,7vw,2.6rem);font-weight:600;line-height:1.15}
+  .flag{font-size:clamp(2.6rem,11vw,4.5rem);line-height:1}
+  .sign-dir{background:var(--sign-yellow);color:#000;border-radius:0 0 6px 6px;padding:10px 18px;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:clamp(1.3rem,5.5vw,1.9rem);line-height:1.2;display:flex;gap:14px;align-items:center;flex-wrap:wrap;min-height:58px}
+  .sign-dir .arrow{font-size:1.2em}
+  .sign-main{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+  .sign-tag{font:600 1rem/1 "Barlow Condensed",sans-serif;letter-spacing:.03em;padding:4px 8px;border-radius:3px;border:2px solid var(--sign-yellow);color:var(--sign-yellow)}
+  .sign-tag.now{background:var(--sign-yellow);color:#000}
+  .greet-big{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:clamp(2.6rem,12vw,4.8rem);line-height:1;color:var(--runway-white);margin:0 0 10px;unicode-bidi:plaintext}
+  .greet-rest{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:-10px 0 22px}
+  .greet-rest #greetText{flex:1 1 220px;font-family:"Barlow Condensed",sans-serif;font-weight:500;font-size:clamp(1.25rem,5vw,1.7rem);line-height:1.25;unicode-bidi:plaintext}
+  .greet-rest .btn{white-space:nowrap}
+  .greet-host{order:3;flex:1 1 100%;font-family:"Barlow Condensed",sans-serif;font-weight:500;font-size:clamp(1.1rem,4.4vw,1.45rem);line-height:1.25;color:var(--sign-yellow)}
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:2px;margin-top:2px}
+  .fact{background:var(--asphalt-2);padding:8px 12px}
+  .fact:last-child{grid-column:1/-1}
+  .fact dt{color:var(--muted);font-size:.85rem}
+  .fact dd{margin:0;font-family:"Barlow Condensed",sans-serif;font-size:1.35rem;font-weight:500}
+
+  .anthem{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 22px;color:var(--runway-white)}
+  .anthem .title{flex:1 1 200px;color:var(--muted);font-size:.95rem}
+  .anthem .title strong{color:var(--runway-white);font-weight:500}
+
+  .radar-wrap{position:relative}
+  canvas{width:100%;aspect-ratio:1;display:block;background:#232527;border-radius:4px}
+  .radar-note{color:var(--muted);font-size:.85rem;margin-top:6px}
+
+  .status{margin:14px 0 0;font-size:.9rem;color:var(--muted)}
+  .status.error{background:var(--mandatory-red);color:#fff;padding:8px 12px;border-radius:4px}
+
+  h2{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:1.3rem;margin:28px 0 8px}
+  ol.history{list-style:none;margin:0;padding:0}
+  ol.history li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid #3d4043}
+  ol.history .cs{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:1.2rem;min-width:90px;color:var(--sign-yellow)}
+  ol.history .t{margin-left:auto;color:var(--muted);font-size:.85rem}
+  ol.history li{flex-wrap:wrap}
+  ol.history .pl{flex:1 1 100%;margin:2px 0 0 100px;color:var(--muted);font-size:.85rem}
+  ol.history .pl span{display:block}
+  ol.history .empty,ol.playlist .empty{color:var(--muted)}
+  ol.playlist{list-style:none;margin:0;padding:0;border-top:1px solid #3d4043}
+  ol.playlist li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid #3d4043}
+  ol.playlist .w{display:flex;gap:10px;align-items:baseline;min-width:0;flex:1}
+  ol.playlist .fl{flex:0 0 1.4em}
+  ol.playlist .tx{min-width:0}
+  ol.playlist b{font-weight:600}
+  ol.playlist small{display:block;color:var(--muted);font-size:.8rem}
+  ol.playlist .t{color:var(--muted);font-size:.85rem;flex:0 0 auto}
+  ol.playlist li:first-child:not(.empty) b{color:var(--sign-yellow)}
+  .range{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.9rem;flex:1 1 100%}
+  .range input{flex:1;accent-color:var(--sign-yellow)}
+  [hidden]{display:none!important}
+  .tabs{display:flex;gap:2px;margin:14px -12px 0;padding:0 12px;border-bottom:2px solid var(--sign-yellow);overflow-x:auto}
+  .tabs button{flex:0 0 auto;background:none;border:0;border-radius:3px 3px 0 0;color:var(--muted);padding:8px 14px;min-height:44px;font:600 1.15rem "Barlow Condensed",sans-serif;cursor:pointer}
+  .tabs button:hover{color:var(--runway-white)}
+  .tabs button[aria-selected="true"]{background:var(--sign-yellow);color:#000}
+  .panel{padding-top:12px}
+  .ph{font:600 1.25rem/1.2 "Barlow Condensed",sans-serif;margin:14px 0 8px}
+  .panel > .ph:first-child{margin-top:0}
+  .pnote{color:var(--muted);margin:4px 0}
+  .psrc{color:var(--muted);font-size:.75rem;margin:8px 0 0}
+  .np1{display:flex;gap:12px;align-items:center;color:inherit;text-decoration:none}
+  .np1 img{width:72px;height:72px;border-radius:3px;flex:0 0 auto;background:#232527}
+  .np1 strong{display:block;font:700 1.6rem/1.1 "Barlow Condensed",sans-serif;color:var(--sign-yellow)}
+  .plist{margin:10px 0 0;padding-left:1.6em;font-size:.95rem}
+  .plist li{padding:2px 0}
+  .plist strong{font-weight:500}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(6rem,1fr));gap:12px}
+  .pitem{display:flex;flex-direction:column;gap:2px;font-size:.95rem;line-height:1.25}
+  .pitem small{color:var(--muted);font-size:.78rem}
+  .pthumb{aspect-ratio:1;background:#232527;border-radius:3px;overflow:hidden;margin-bottom:4px;display:grid;place-items:center;font:700 2.2rem 'Barlow Condensed',sans-serif;color:#45484b}
+  .pthumb img{width:100%;height:100%;object-fit:cover}
+  .modes{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap}
+  .genre{display:flex;flex-direction:column;gap:4px;margin:0 0 12px}
+  .genre label{color:var(--muted);font-size:.9rem}
+  .genre select{flex:0 0 auto}
+  .brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;grid-column:1/-1}
+  .brand h1{margin:0}
+  .langs{display:flex;border:1px solid #4a4d50;border-radius:4px;overflow:hidden}
+  .langs button{background:none;border:0;color:var(--muted);padding:6px 10px;min-height:36px;cursor:pointer;font:600 .9rem Barlow,sans-serif}
+  .langs button[aria-pressed="true"]{background:var(--sign-yellow);color:#000}
+  .back-live{display:block;width:100%;text-align:left;margin:0 0 10px;font-size:1.1rem;font-weight:600}
+  .back-live small{display:block;font-weight:400;font-size:.8rem}
+  ol.playlist .pl-play{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:1px solid #4a4d50;background:var(--asphalt-2);color:var(--sign-yellow);cursor:pointer;font-size:.9rem;line-height:1}
+  ol.playlist .pl-play:hover{background:var(--sign-yellow);color:#000}
+  ol.playlist li.pinned .pl-play{background:var(--sign-yellow);color:#000}
+  .mode-switch{display:block;width:100%;text-align:left;margin:0 0 14px;font-size:1.05rem}
+  .mode-switch .fl{font-size:1.3em;vertical-align:-2px;margin-left:6px}
+  .modes .btn[aria-pressed="true"]{background:var(--sign-yellow);color:#000;border-color:var(--sign-yellow)}
+  .custom{display:flex;flex-wrap:wrap;gap:8px;margin:-8px 0 18px}
+  .custom input{flex:1 1 240px;background:var(--asphalt-2);color:var(--runway-white);border:1px solid #4a4d50;border-radius:4px;padding:9px 12px;min-height:44px}
+  .custom input::placeholder{color:var(--muted)}
+  .here{margin:-8px 0 18px;grid-column:1/-1;color:var(--muted);font-size:.9rem}
+  .here strong{color:var(--runway-white);font-weight:500}
+  .here a{color:var(--sign-yellow)}
+  .cfacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:8px 14px;margin:12px 0 0}
+  .cfacts dt{color:var(--muted);font-size:.78rem}
+  .cfacts dd{margin:0;font-family:"Barlow Condensed",sans-serif;font-size:1.15rem;font-weight:500;line-height:1.2}
+  .cfacts dd small{font-family:Barlow,sans-serif;font-size:.72rem;color:var(--muted);font-weight:400}
+  .onair{display:flex;gap:12px;align-items:center;margin:0 0 14px;padding:10px 12px;background:#000;border:3px solid var(--sign-yellow);border-radius:6px;color:inherit;text-decoration:none}
+  .onair-icon{flex:0 0 52px;height:52px;border-radius:4px;background:var(--asphalt-2);display:grid;place-items:center;overflow:hidden;font:700 1.6rem 'Barlow Condensed',sans-serif;color:var(--sign-yellow)}
+  .onair-icon img{width:100%;height:100%;object-fit:contain;background:#fff}
+  .onair-text{min-width:0;display:flex;flex-direction:column}
+  .onair-text small{color:var(--muted);font-size:.78rem}
+  .onair-text strong{font:700 clamp(1.4rem,6vw,2rem)/1.1 'Barlow Condensed',sans-serif;color:var(--sign-yellow);overflow-wrap:anywhere}
+  .onair-text span{font-size:.9rem}
+  .onair-text .onair-song{font-size:1.05rem;margin:2px 0;color:var(--runway-white)}
+  .onair-song b{font-weight:600}
+  .onair-text .onair-song.note{color:var(--muted);font-size:.85rem}
+  .mix-row .n small{display:block;color:var(--muted);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mixer{display:flex;flex-direction:column;gap:6px;margin:-10px 0 22px}
+  .mix-row{display:grid;grid-template-columns:minmax(0,13rem) 1fr 3ch;gap:10px;align-items:center;font-size:.95rem}
+  .mix-row .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mix-row .b{height:8px;background:#45484b;border-radius:4px;overflow:hidden}
+  .mix-row .b span{display:block;height:100%;background:var(--sign-yellow);border-radius:4px;transition:width .25s linear}
+  .mix-row .v{color:var(--muted);font-size:.85rem;text-align:right}
+  .country{background:var(--asphalt-2);padding:12px;border-radius:4px;margin:14px 0 0}
+  .chead{display:flex;gap:14px;align-items:center}
+  .chead a{flex:0 0 auto;line-height:0}
+  .chead img{width:96px;height:120px;object-fit:cover;object-position:50% 20%;border-radius:3px;background:#232527}
+  .cinfo{flex:1;min-width:0}
+  .crole{color:var(--muted);font-size:.85rem}
+  .cname{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:1.5rem;line-height:1.15;margin-bottom:10px}
+  .demo-head{display:flex;justify-content:space-between;align-items:baseline;font-size:.9rem;color:var(--muted)}
+  .demo-head strong{font-family:"Barlow Condensed",sans-serif;font-size:1.6rem;color:var(--sign-yellow);font-weight:700}
+  .ladder{position:relative;height:10px;background:#45484b;border-radius:5px;margin:4px 0 6px;overflow:hidden}
+  .ladder-fill{position:absolute;inset:0 auto 0 0;background:var(--sign-yellow);border-radius:5px;transition:width .6s ease}
+  .ladder i{position:absolute;top:0;bottom:0;width:2px;background:var(--asphalt-2)}
+  .demo-cat{font-size:.9rem}
+  .demo-src{font-size:.75rem;color:var(--muted);margin-top:4px}
+  .finds{order:2}
+  .brand h1 .sub{color:var(--runway-white);font-weight:600}
+  .disc-intro{color:var(--muted);margin:0 0 12px}
+  .disc-status{margin:0 0 12px;padding:8px 10px;border-left:3px solid var(--sign-yellow);background:var(--asphalt-2);font-size:.9rem}
+  .now-card{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;margin:0 0 14px;padding:12px;background:#000;border:3px solid var(--sign-yellow);border-radius:6px}
+  .now-card img{width:110px;height:110px;object-fit:cover;border-radius:4px;background:var(--asphalt-2)}
+  .now-info{min-width:0;display:flex;flex-direction:column;gap:2px}
+  .now-info small{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+  .now-info strong{font:700 clamp(1.4rem,5vw,1.9rem)/1.1 'Barlow Condensed',sans-serif;color:var(--sign-yellow);overflow-wrap:anywhere}
+  .now-artist{font-size:1.1rem}
+  .now-meta{font-size:.85rem;color:var(--muted)}
+  .now-prog{height:4px;background:var(--asphalt-2);border-radius:2px;margin-top:auto;overflow:hidden}
+  .now-prog div{height:100%;width:0;background:var(--sign-yellow);transition:width .25s linear}
+  .now-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+  .now-actions a.btn{text-decoration:none;display:inline-flex;align-items:center}
+  .sp-embed{margin:0 0 14px}
+  .sp-embed iframe{border:0;border-radius:12px;display:block}
+  .up-next{margin:0 0 14px;font-size:.9rem;color:var(--muted)}
+  .finds-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  ol.favs{list-style:none;margin:0;padding:0}
+  ol.favs li{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--asphalt-2)}
+  ol.favs li.empty{color:var(--muted);display:block}
+  ol.favs img{width:44px;height:44px;border-radius:3px;object-fit:cover;flex:0 0 44px}
+  ol.favs .tx{flex:1;min-width:0}
+  ol.favs .tx small{display:block;color:var(--muted)}
+  ol.favs .links{display:flex;gap:10px;align-items:center;font-size:.85rem}
+  ol.favs .links a{color:var(--sign-yellow)}
+  ol.favs .rm{background:none;border:0;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:0 4px}
+  .src-note{font-size:.75rem;color:var(--muted);margin:10px 0 0}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+  <div class="brand">
+    <h1>DJ VLIEGTUIG <span class="sub">DISCOVERY</span></h1>
+    <div class="langs" role="group" data-i18n-attr="aria-label:language">
+      <button type="button" data-lang="nl">NL</button><button type="button" data-lang="en">EN</button><button type="button" data-lang="de">DE</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <select id="spot" data-i18n-attr="aria-label:pickSpot"></select>
+    <select id="runway" data-i18n-attr="aria-label:pickRunwayAria" hidden></select>
+    <button class="btn" id="gps" type="button" data-i18n="useGps">Gebruik mijn locatie</button>
+    <button class="btn primary" id="start" type="button" data-i18n="soundOn">Start met geluid</button>
+    <label class="range"><span data-i18n="overhead">Boven je = binnen</span>
+      <input id="radius" type="range" min="0.5" max="5" step="0.5" value="3">
+      <span id="radiusVal">3 km</span>
+    </label>
+  </div>
+
+  <form class="custom" id="customForm" hidden>
+    <input id="customInput" type="text" autocomplete="off" enterkeyhint="search"
+      data-i18n-attr="placeholder:searchPh;aria-label:searchAria">
+    <button class="btn primary" type="submit" data-i18n="search">Zoek</button>
+  </form>
+
+  <p class="here" id="hereLine"></p>
+  </header>
+
+  <div class="layout">
+    <div class="col col-left">
+      <section class="flight">
+        <div class="greet-big" id="greetBig" dir="auto" hidden></div>
+        <section class="signs" aria-live="polite">
+          <div class="sign-loc">
+            <div class="sign-main">
+              <div class="sign-tag" id="signTag" hidden></div>
+              <div class="callsign idle" id="callsign" data-i18n="waiting">Wachten op een vliegtuig</div>
+            </div>
+            <div class="flag" id="flag" aria-hidden="true"></div>
+          </div>
+          <div class="sign-dir" id="route" data-i18n="pickRunway">Kies een plek bij een baan</div>
+        </section>
+        <div class="greet-rest" id="greetRest" hidden>
+          <span id="greetText" dir="auto"></span>
+          <span id="greetHost" class="greet-host" hidden></span>
+          <button class="btn" id="greetPlay" type="button">&#128266; <span data-i18n="listen">Luister</span></button>
+        </div>
+        <dl class="facts" id="facts" hidden>
+          <div class="fact"><dt data-i18n="alt">Hoogte</dt><dd id="fAlt">&#8211;</dd></div>
+          <div class="fact"><dt data-i18n="overYou">Boven je</dt><dd id="fEta">&#8211;</dd></div>
+          <div class="fact"><dt data-i18n="dist">Afstand</dt><dd id="fDist">&#8211;</dd></div>
+          <div class="fact"><dt data-i18n="speed">Snelheid</dt><dd id="fSpd">&#8211;</dd></div>
+          <div class="fact"><dt data-i18n="aircraft">Toestel</dt><dd id="fType">&#8211;</dd></div>
+        </dl>
+      </section>
+
+      <section class="country" id="country" hidden aria-live="polite">
+        <div class="chead">
+          <a id="cLink" target="_blank" rel="noopener"><img id="cImg" alt=""></a>
+          <div class="cinfo">
+            <div class="crole" id="cRole"></div>
+            <div class="cname" id="cName"></div>
+          </div>
+        </div>
+        <div class="tabs" role="tablist" data-i18n-attr="aria-label:countryInfo">
+          <button type="button" role="tab" data-tab="land" aria-controls="p-land" data-i18n="tabLand">Land</button>
+          <button type="button" role="tab" data-tab="muziek" aria-controls="p-muziek" data-i18n="tabMusic">Muziek</button>
+        </div>
+        <div class="panel" id="p-land" role="tabpanel">
+          <div class="demo" id="cDemo">
+            <div class="demo-head"><span data-i18n="demoIndex">Democratie-index</span><strong id="cScore">&#8211;</strong></div>
+            <div class="ladder"><div class="ladder-fill" id="cBar" style="width:0"></div><i style="left:40%"></i><i style="left:60%"></i><i style="left:80%"></i></div>
+            <div class="demo-cat" id="cCat"></div>
+            <div class="demo-src" id="cSrc"></div>
+          </div>
+          <dl class="cfacts" id="cFacts"></dl>
+        </div>
+        <div class="panel" id="p-muziek" role="tabpanel" hidden></div>
+      </section>
+
+      <section class="radar-box">
+        <div class="radar-wrap">
+          <canvas id="radar" width="700" height="700" data-i18n-attr="aria-label:radarAria"></canvas>
+          <div class="radar-note" data-i18n="radarNote">Ringen op 1, 5 en 10 km. Noord is boven.</div>
+        </div>
+        <p class="status" id="status" data-i18n="notStarted">Nog niet gestart.</p>
+      </section>
+    </div>
+
+    <div class="col col-right">
+      <section class="sound">
+        <div class="genre" id="genreBox">
+          <label for="genre" data-i18n="iDiscover">Ik ontdek graag:</label>
+          <select id="genre" data-i18n-attr="aria-label:genreAria"></select>
+        </div>
+        <p class="disc-intro" id="discIntro" data-i18n="discIntro"></p>
+        <p class="disc-status" id="discStatus" aria-live="polite" hidden></p>
+        <div class="now-card" id="nowCard" hidden>
+          <img id="nowArt" alt="">
+          <div class="now-info">
+            <small data-i18n="nowDiscovered">Nu ontdekt</small>
+            <strong id="nowTitle"></strong>
+            <span class="now-artist" id="nowArtist"></span>
+            <span class="now-meta" id="nowMeta"></span>
+            <div class="now-prog"><div id="nowProg"></div></div>
+          </div>
+          <div class="now-actions">
+            <button class="btn" id="favBtn" type="button" aria-pressed="false"></button>
+            <button class="btn" id="nextBtn" type="button">&#9197; <span data-i18n="next">Volgende artiest</span></button>
+            <button class="btn primary" id="spPlay" type="button" hidden data-i18n="spotifyFull">Luister verder in Spotify</button>
+            <a class="btn" id="spLink" target="_blank" rel="noopener">Spotify &#8599;</a>
+            <a class="btn" id="apLink" target="_blank" rel="noopener">Apple Music &#8599;</a>
+          </div>
+        </div>
+        <button class="btn primary" id="play" type="button" hidden></button>
+        <button class="btn primary back-live" id="backLive" type="button" hidden>&#9664; <span data-i18n="backLive">Terug naar live</span> <small data-i18n="backLiveSub">DJ Vliegtuig neemt het weer over</small></button>
+        <div class="sp-embed" id="spEmbed" hidden></div>
+        <p class="up-next" id="upNext" hidden></p>
+        <h2 data-i18n="playlist">Speellijst</h2>
+        <ol class="playlist" id="playlist"><li class="empty" data-i18n="playlistEmpty">Nog niets afgespeeld. Zet het geluid aan.</li></ol>
+      </section>
+
+      <section class="finds">
+        <div class="finds-head">
+          <h2 data-i18n="myFinds">Mijn ontdekkingen</h2>
+          <button class="btn" id="copyFavs" type="button" hidden data-i18n="copyList">Kopieer lijst</button>
+        </div>
+        <ol class="favs" id="favs"></ol>
+        <p class="src-note" data-i18n="srcNote"></p>
+      </section>
+
+      <section class="past">
+        <h2 data-i18n="history">Eerder overgekomen</h2>
+        <ol class="history" id="history"><li class="empty" data-i18n="nothingYet">Nog niets.</li></ol>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+
+/* ---------- Talen: Nederlands, Engels, Duits ----------
+   Keuze: eerder gekozen taal, anders de browsertaal (nl/de), anders Engels. */
+const I18N = {
+  nl: {
+    pickSpot:'Kies een plek of luchthaven', useGps:'Gebruik mijn locatie', soundOn:'Start met geluid', soundOff:'Geluid uit',
+    overhead:'Boven je = binnen', searchPh:'Adres, plaats of co\u00f6rdinaten (bijv. Heathrow of 52.36, 4.71)', searchAria:'Locatie invoeren', search:'Zoek',
+    waiting:'Wachten op een vliegtuig', pickRunway:'Kies een plek bij een baan', listen:'Luister',
+    alt:'Hoogte', overYou:'Boven je', dist:'Afstand', speed:'Snelheid', aircraft:'Toestel',
+    countryInfo:'Informatie over het land', tabLand:'Land', tabMusic:'Muziek', demoIndex:'Democratie-index',
+    radarAria:'Kaart met vliegtuigen in de buurt', radarNote:'Ringen op 1, 5 en 10 km. Noord is boven.', notStarted:'Nog niet gestart.',
+    sound:'Geluid', iLove:'Ik houd van:', genreAria:'Genre van de radiozender',
+    g_popular:'Populairste zender', g_pop:'Pop', g_rock:'Rock', g_folk:'Folk', g_jazz:'Jazz', g_classical:'Klassiek', g_dance:'Dance', g_hiphop:'Hiphop', g_oldies:'Oldies', g_news:'Nieuws',
+    playAnthem:'Speel volkslied', stop:'Stop', backLive:'Terug naar live', backLiveSub:'DJ Vliegtuig neemt het weer over',
+    onAir:'Nu op de radio', playlist:'Speellijst', playlistEmpty:'Nog niets afgespeeld. Zet het geluid aan.',
+    history:'Eerder overgekomen', nothingYet:'Nog niets.',
+    myLocation:'Mijn locatie', enterOwn:'Zelf invoeren\u2026', map:'kaart', kmFrom:'{d} km van {s}', ownCoords:'Eigen co\u00f6rdinaten',
+    searching:'Zoeken naar \u201c{q}\u201d\u2026', notFound:'Niets gevonden voor \u201c{q}\u201d. Probeer een andere naam of co\u00f6rdinaten.', searchFail:'Zoeken lukt nu niet. Probeer co\u00f6rdinaten, bijv. 52.36, 4.71.',
+    noGeo:'Je browser geeft geen locatie door. Kies een plek uit de lijst.', locating:'Locatie opvragen\u2026',
+    geoFail:'Locatie niet beschikbaar (geen toestemming?). Polderbaan noord gekozen; kies zelf een plek in de lijst.',
+    retrying:'Even geen update, opnieuw proberen\u2026 ({e})', feedDown:'Vluchtdata al {n} keer niet bereikbaar. Laatste fout: {e}',
+    statusLine:'{n} vliegtuigen binnen {km} km \u00b7 bijgewerkt {t}', statusLine1:'1 vliegtuig binnen {km} km \u00b7 bijgewerkt {t}',
+    lookingRoute:'Route opzoeken\u2026', routeUnknown:'Route onbekend', noCallsign:'Geen vluchtnummer uitgezonden',
+    nothingOver:'Even niets boven je', waitingNext:'Wachten op het volgende vliegtuig',
+    nowClosest:'nu \u00b7 dichtst over {s} s', now:'nu', inSec:'over {s} s', kmh:'km/u',
+    upNext:'Up next', nowPlaying:'Now playing',
+    headGov:'Regeringsleider', headState:'Staatshoofd', roleOf:'{r} van {c}', portraitOf:'Portret van {n}',
+    demo_full:'volledige democratie', demo_flawed:'gebrekkige democratie', demo_hybrid:'hybride regime', demo_auth:'autoritair regime',
+    demoNone:'Geen score voor dit land in de index.', demoFail:'Democratie-index kon niet worden geladen.', demoSrc:'EIU Democracy Index{y}, via Wikidata',
+    capital:'Hoofdstad', population:'Inwoners', founded:'Opgericht', bc:'{y} v.Chr.', area:'Oppervlakte', gdp:'Bbp', gdppc:'Bbp per inwoner',
+    life:'Levensverwachting', years:'{n} jaar', online:'Online', ofPop:'van de bevolking, {y}', currency:'Munt', fx:'Wisselkoers', today:'vandaag',
+    bigmac:'Big Mac', pricier:'duurder dan hier ({p}), {d}', cheaper:'goedkoper dan hier ({p}), {d}', bmIndex:'Big Mac-index', bmRef:'referentie ($)',
+    under:'{n}% ondergewaardeerd', over:'{n}% overgewaardeerd', vsDollar:'t.o.v. dollar', bmPer:'Big Macs per inwoner', bmPerNote:'per jaar, bbp \u00f7 prijs',
+    loading:'Laden\u2026', thisCountry:'dit land', musicFail:'Muziekinfo kon niet worden geladen.', nowNo1:'Nu op 1 in {c}', chartSrc:'Meest gespeeld op Apple Music, vandaag',
+    noChart:'Geen actuele hitlijst beschikbaar voor {c}.', bandsFrom:'Bekende bands uit {c}', since:'sinds {y}', bandsSrc:'Bron: Wikidata, gesorteerd op bekendheid (aantal Wikipedia-talen)',
+    anthemOf:'Volkslied van {c}', switchedTo:'Overgeschakeld naar ', anthemOfPre:'Volkslied van ', radioSuffix:'{s} (radio)',
+    playingNow:'{s} speelt nu', listenTo:'Luister naar {s}', pinnedTitle:'Speelt nu (zelf gekozen)', switchTo:'Schakel over naar {s}',
+    tapToStart:'Tik om geluid te starten', anthemMe:'Doe mij maar het volkslied', radioMe:'Doe mij maar de radio',
+    holding:'blijft spelen tot het volgende vliegtuig', noStation:'geen werkende zender gevonden in dit land', noRecording:'geen opname', findingStation:'zender zoeken\u2026',
+    pinnedKicker:'Zelf gekozen \u00b7 de dj staat uit', genreFallback:'geen werkende {g}zender gevonden, dit is de populairste zender',
+    titleFail:'Titel kon niet worden opgehaald', noTitle:'Deze zender stuurt geen titel mee',
+    txtAnthem:'Zet geluid aan: de volksliederen van alle vliegtuigen in de buurt worden gemixt, het dichtstbijzijnde het hardst.',
+    txtRadio:'Zet geluid aan: elk land krijgt zijn radiozender. De vliegtuigen zijn de dj en schuiven de mixer naar het land dat het dichtst bij is.',
+    txtRadioIOS:'Zet geluid aan: de radiozender van het land van het dichtstbijzijnde vliegtuig speelt. Op iPhone en iPad schakelt hij direct over, zonder fade.',
+    end:'kop', d_n:'noord', d_s:'zuid', d_e:'oost', d_w:'west', d_ne:'noordoost', d_sw:'zuidwest', language:'Taal', welcomeHost:'Welkom {c}, het land van {x}!', runway:'Baan', d_se:'zuidoost', d_nw:'noordwest', pickRunwayAria:'Kies een baankop',
+    iDiscover:'Ik ontdek graag:',
+    genreAria:'Genre om te ontdekken',
+    g_indie:'Indie',
+    g_electronic:'Elektronisch',
+    g_punk:'Punk',
+    g_metal:'Metal',
+    g_singersongwriter:'Singer-songwriter',
+    g_reggae:'Reggae',
+    g_blues:'Blues',
+    g_soul:'Soul',
+    discIntro:'Zet geluid aan. Elk vliegtuig dat over je heen komt, brengt een artiest uit zijn land mee in jouw genre: een fragment van 30 seconden, dan de volgende uit dat land, tot er een nieuw vliegtuig komt.',
+    nowDiscovered:'Nu ontdekt',
+    fav:'Bewaar',
+    faved:'Bewaard',
+    next:'Volgende artiest',
+    spotifyFull:'Luister verder in Spotify',
+    searchingArtist:'Op zoek naar {g} uit {c}\u2026',
+    noArtist:'Geen {g} gevonden uit {c}. Dit is iets anders uit dat land.',
+    noArtistAtAll:'Geen fragment gevonden uit {c}. Wachten op het volgende vliegtuig.',
+    waitingFirst:'Wachten tot er een vliegtuig binnen je straal komt\u2026',
+    upNextFrom:'Hierna: {c} \u00b7 {a}',
+    myFinds:'Mijn ontdekkingen',
+    noFinds:'Nog niets bewaard. Tik op \u2661 Bewaar bij een nummer dat je goed vindt.',
+    copyList:'Kopieer lijst',
+    copied:'Gekopieerd!',
+    remove:'Verwijder',
+    viaFlight:'via {f}',
+    replay:'Speel {s} nog eens',
+    playlistEmpty:'Nog niets ontdekt. Zet het geluid aan.',
+    backLiveSub:'de vliegtuigen kiezen weer',
+    srcNote:'Artiesten: MusicBrainz \u00b7 fragmenten: Apple Music \u00b7 bewaarde nummers staan alleen in deze browser.',
+  },
+  en: {
+    pickSpot:'Choose a spot or airport', useGps:'Use my location', soundOn:'Start sound', soundOff:'Sound off',
+    overhead:'Overhead = within', searchPh:'Address, place or coordinates (e.g. Heathrow or 52.36, 4.71)', searchAria:'Enter a location', search:'Search',
+    waiting:'Waiting for a plane', pickRunway:'Choose a spot near a runway', listen:'Listen',
+    alt:'Altitude', overYou:'Overhead', dist:'Distance', speed:'Speed', aircraft:'Aircraft',
+    countryInfo:'About the country', tabLand:'Country', tabMusic:'Music', demoIndex:'Democracy index',
+    radarAria:'Map of nearby aircraft', radarNote:'Rings at 1, 5 and 10 km. North is up.', notStarted:'Not started yet.',
+    sound:'Sound', iLove:'I love:', genreAria:'Radio station genre',
+    g_popular:'Most popular station', g_pop:'Pop', g_rock:'Rock', g_folk:'Folk', g_jazz:'Jazz', g_classical:'Classical', g_dance:'Dance', g_hiphop:'Hip-hop', g_oldies:'Oldies', g_news:'News',
+    playAnthem:'Play anthem', stop:'Stop', backLive:'Back to live', backLiveSub:'DJ Vliegtuig takes over again',
+    onAir:'On the radio now', playlist:'Playlist', playlistEmpty:'Nothing played yet. Turn the sound on.',
+    history:'Recently overhead', nothingYet:'Nothing yet.',
+    myLocation:'My location', enterOwn:'Enter a location\u2026', map:'map', kmFrom:'{d} km from {s}', ownCoords:'Custom coordinates',
+    searching:'Searching for \u201c{q}\u201d\u2026', notFound:'Nothing found for \u201c{q}\u201d. Try another name or coordinates.', searchFail:'Search is not working right now. Try coordinates, e.g. 52.36, 4.71.',
+    noGeo:'Your browser does not share a location. Choose a spot from the list.', locating:'Getting your location\u2026',
+    geoFail:'Location not available (no permission?). Polderbaan north selected; choose a spot from the list.',
+    retrying:'No update for a moment, retrying\u2026 ({e})', feedDown:'Flight data unreachable {n} times in a row. Last error: {e}',
+    statusLine:'{n} aircraft within {km} km \u00b7 updated {t}', statusLine1:'1 aircraft within {km} km \u00b7 updated {t}',
+    lookingRoute:'Looking up route\u2026', routeUnknown:'Route unknown', noCallsign:'No flight number broadcast',
+    nothingOver:'Nothing overhead right now', waitingNext:'Waiting for the next plane',
+    nowClosest:'now \u00b7 closest in {s} s', now:'now', inSec:'in {s} s', kmh:'km/h',
+    upNext:'Up next', nowPlaying:'Now playing',
+    headGov:'Head of government', headState:'Head of state', roleOf:'{r} of {c}', portraitOf:'Portrait of {n}',
+    demo_full:'full democracy', demo_flawed:'flawed democracy', demo_hybrid:'hybrid regime', demo_auth:'authoritarian regime',
+    demoNone:'No score for this country in the index.', demoFail:'Democracy index could not be loaded.', demoSrc:'EIU Democracy Index{y}, via Wikidata',
+    capital:'Capital', population:'Population', founded:'Founded', bc:'{y} BC', area:'Area', gdp:'GDP', gdppc:'GDP per capita',
+    life:'Life expectancy', years:'{n} years', online:'Online', ofPop:'of the population, {y}', currency:'Currency', fx:'Exchange rate', today:'today',
+    bigmac:'Big Mac', pricier:'more expensive than here ({p}), {d}', cheaper:'cheaper than here ({p}), {d}', bmIndex:'Big Mac index', bmRef:'reference ($)',
+    under:'{n}% undervalued', over:'{n}% overvalued', vsDollar:'against the dollar', bmPer:'Big Macs per person', bmPerNote:'per year, GDP \u00f7 price',
+    loading:'Loading\u2026', thisCountry:'this country', musicFail:'Music info could not be loaded.', nowNo1:'Number 1 in {c} right now', chartSrc:'Most played on Apple Music, today',
+    noChart:'No current chart available for {c}.', bandsFrom:'Famous bands from {c}', since:'since {y}', bandsSrc:'Source: Wikidata, sorted by fame (number of Wikipedia languages)',
+    anthemOf:'Anthem of {c}', switchedTo:'Switched to ', anthemOfPre:'Anthem of ', radioSuffix:'{s} (radio)',
+    playingNow:'{s} is playing', listenTo:'Listen to {s}', pinnedTitle:'Playing now (your choice)', switchTo:'Switch to {s}',
+    tapToStart:'Tap to start the sound', anthemMe:'Give me the anthem', radioMe:'Give me the radio',
+    holding:'keeps playing until the next plane', noStation:'no working station found in this country', noRecording:'no recording', findingStation:'finding a station\u2026',
+    pinnedKicker:'Your choice \u00b7 the DJ is off', genreFallback:'no working {g} station found, this is the most popular station',
+    titleFail:'Could not get the title', noTitle:'This station does not send song titles',
+    txtAnthem:'Turn the sound on: the anthems of all nearby planes are mixed, the closest one loudest.',
+    txtRadio:'Turn the sound on: every country gets its radio station. The planes are the DJ and slide the mixer to the country that is closest.',
+    txtRadioIOS:'Turn the sound on: the radio station of the closest plane\u2019s country plays. On iPhone and iPad it switches straight away, without a fade.',
+    end:'end', d_n:'north', d_s:'south', d_e:'east', d_w:'west', d_ne:'northeast', d_sw:'southwest', language:'Language', welcomeHost:'Welcome {c}, the land of {x}!', runway:'Runway', d_se:'southeast', d_nw:'northwest', pickRunwayAria:'Choose a runway end',
+    iDiscover:'I like to discover:',
+    genreAria:'Genre to discover',
+    g_indie:'Indie',
+    g_electronic:'Electronic',
+    g_punk:'Punk',
+    g_metal:'Metal',
+    g_singersongwriter:'Singer-songwriter',
+    g_reggae:'Reggae',
+    g_blues:'Blues',
+    g_soul:'Soul',
+    discIntro:'Turn on the sound. Every plane that passes over you brings an artist from its country in your genre: a 30-second clip, then the next one from that country, until a new plane arrives.',
+    nowDiscovered:'Now discovered',
+    fav:'Save',
+    faved:'Saved',
+    next:'Next artist',
+    spotifyFull:'Keep listening in Spotify',
+    searchingArtist:'Looking for {g} from {c}\u2026',
+    noArtist:'No {g} found from {c}. Here is something else from that country.',
+    noArtistAtAll:'No clip found from {c}. Waiting for the next plane.',
+    waitingFirst:'Waiting for a plane to enter your radius\u2026',
+    upNextFrom:'Up next: {c} \u00b7 {a}',
+    myFinds:'My discoveries',
+    noFinds:'Nothing saved yet. Tap \u2661 Save on a track you like.',
+    copyList:'Copy list',
+    copied:'Copied!',
+    remove:'Remove',
+    viaFlight:'via {f}',
+    replay:'Play {s} again',
+    playlistEmpty:'Nothing discovered yet. Turn on the sound.',
+    backLiveSub:'the planes choose again',
+    srcNote:'Artists: MusicBrainz \u00b7 clips: Apple Music \u00b7 saved tracks stay in this browser only.',
+  },
+  de: {
+    pickSpot:'Ort oder Flughafen w\u00e4hlen', useGps:'Meinen Standort verwenden', soundOn:'Ton starten', soundOff:'Ton aus',
+    overhead:'\u00dcber dir = innerhalb', searchPh:'Adresse, Ort oder Koordinaten (z. B. Heathrow oder 52.36, 4.71)', searchAria:'Ort eingeben', search:'Suchen',
+    waiting:'Warten auf ein Flugzeug', pickRunway:'W\u00e4hle einen Ort an einer Bahn', listen:'Anh\u00f6ren',
+    alt:'H\u00f6he', overYou:'\u00dcber dir', dist:'Entfernung', speed:'Geschwindigkeit', aircraft:'Flugzeug',
+    countryInfo:'Infos zum Land', tabLand:'Land', tabMusic:'Musik', demoIndex:'Demokratieindex',
+    radarAria:'Karte mit Flugzeugen in der N\u00e4he', radarNote:'Ringe bei 1, 5 und 10 km. Norden ist oben.', notStarted:'Noch nicht gestartet.',
+    sound:'Ton', iLove:'Ich liebe:', genreAria:'Genre des Radiosenders',
+    g_popular:'Beliebtester Sender', g_pop:'Pop', g_rock:'Rock', g_folk:'Folk', g_jazz:'Jazz', g_classical:'Klassik', g_dance:'Dance', g_hiphop:'Hip-Hop', g_oldies:'Oldies', g_news:'Nachrichten',
+    playAnthem:'Hymne abspielen', stop:'Stopp', backLive:'Zur\u00fcck zu live', backLiveSub:'DJ Vliegtuig \u00fcbernimmt wieder',
+    onAir:'Jetzt im Radio', playlist:'Playlist', playlistEmpty:'Noch nichts gespielt. Schalte den Ton ein.',
+    history:'Zuletzt \u00fcberflogen', nothingYet:'Noch nichts.',
+    myLocation:'Mein Standort', enterOwn:'Selbst eingeben\u2026', map:'Karte', kmFrom:'{d} km von {s}', ownCoords:'Eigene Koordinaten',
+    searching:'Suche nach \u201e{q}\u201c\u2026', notFound:'Nichts gefunden f\u00fcr \u201e{q}\u201c. Versuch einen anderen Namen oder Koordinaten.', searchFail:'Die Suche funktioniert gerade nicht. Versuch Koordinaten, z. B. 52.36, 4.71.',
+    noGeo:'Dein Browser gibt keinen Standort weiter. W\u00e4hle einen Ort aus der Liste.', locating:'Standort wird abgefragt\u2026',
+    geoFail:'Standort nicht verf\u00fcgbar (keine Erlaubnis?). Polderbaan Nord gew\u00e4hlt; w\u00e4hle selbst einen Ort aus der Liste.',
+    retrying:'Gerade kein Update, neuer Versuch\u2026 ({e})', feedDown:'Flugdaten {n}-mal nicht erreichbar. Letzter Fehler: {e}',
+    statusLine:'{n} Flugzeuge innerhalb von {km} km \u00b7 aktualisiert {t}', statusLine1:'1 Flugzeug innerhalb von {km} km \u00b7 aktualisiert {t}',
+    lookingRoute:'Route wird gesucht\u2026', routeUnknown:'Route unbekannt', noCallsign:'Keine Flugnummer gesendet',
+    nothingOver:'Gerade nichts \u00fcber dir', waitingNext:'Warten auf das n\u00e4chste Flugzeug',
+    nowClosest:'jetzt \u00b7 am n\u00e4chsten in {s} s', now:'jetzt', inSec:'in {s} s', kmh:'km/h',
+    upNext:'Up next', nowPlaying:'Now playing',
+    headGov:'Regierungschef', headState:'Staatsoberhaupt', roleOf:'{r} von {c}', portraitOf:'Portr\u00e4t von {n}',
+    demo_full:'vollst\u00e4ndige Demokratie', demo_flawed:'unvollst\u00e4ndige Demokratie', demo_hybrid:'Hybridregime', demo_auth:'autorit\u00e4res Regime',
+    demoNone:'Kein Wert f\u00fcr dieses Land im Index.', demoFail:'Demokratieindex konnte nicht geladen werden.', demoSrc:'EIU Democracy Index{y}, \u00fcber Wikidata',
+    capital:'Hauptstadt', population:'Einwohner', founded:'Gegr\u00fcndet', bc:'{y} v. Chr.', area:'Fl\u00e4che', gdp:'BIP', gdppc:'BIP pro Kopf',
+    life:'Lebenserwartung', years:'{n} Jahre', online:'Online', ofPop:'der Bev\u00f6lkerung, {y}', currency:'W\u00e4hrung', fx:'Wechselkurs', today:'heute',
+    bigmac:'Big Mac', pricier:'teurer als hier ({p}), {d}', cheaper:'g\u00fcnstiger als hier ({p}), {d}', bmIndex:'Big-Mac-Index', bmRef:'Referenz ($)',
+    under:'{n} % unterbewertet', over:'{n} % \u00fcberbewertet', vsDollar:'gegen\u00fcber dem Dollar', bmPer:'Big Macs pro Kopf', bmPerNote:'pro Jahr, BIP \u00f7 Preis',
+    loading:'Laden\u2026', thisCountry:'dieses Land', musicFail:'Musikinfos konnten nicht geladen werden.', nowNo1:'Jetzt auf Platz 1 in {c}', chartSrc:'Meistgespielt auf Apple Music, heute',
+    noChart:'Keine aktuellen Charts f\u00fcr {c} verf\u00fcgbar.', bandsFrom:'Bekannte Bands aus {c}', since:'seit {y}', bandsSrc:'Quelle: Wikidata, sortiert nach Bekanntheit (Anzahl Wikipedia-Sprachen)',
+    anthemOf:'Hymne von {c}', switchedTo:'Umgeschaltet auf ', anthemOfPre:'Hymne von ', radioSuffix:'{s} (Radio)',
+    playingNow:'{s} l\u00e4uft gerade', listenTo:'{s} anh\u00f6ren', pinnedTitle:'L\u00e4uft gerade (selbst gew\u00e4hlt)', switchTo:'Auf {s} umschalten',
+    tapToStart:'Tippen, um den Ton zu starten', anthemMe:'Gib mir lieber die Hymne', radioMe:'Gib mir lieber das Radio',
+    holding:'spielt weiter bis zum n\u00e4chsten Flugzeug', noStation:'kein funktionierender Sender in diesem Land gefunden', noRecording:'keine Aufnahme', findingStation:'Sender wird gesucht\u2026',
+    pinnedKicker:'Selbst gew\u00e4hlt \u00b7 der DJ ist aus', genreFallback:'kein funktionierender {g}-Sender gefunden, das ist der beliebteste Sender',
+    titleFail:'Titel konnte nicht abgerufen werden', noTitle:'Dieser Sender sendet keine Titel mit',
+    txtAnthem:'Schalte den Ton ein: Die Hymnen aller Flugzeuge in der N\u00e4he werden gemischt, das n\u00e4chste am lautesten.',
+    txtRadio:'Schalte den Ton ein: Jedes Land bekommt seinen Radiosender. Die Flugzeuge sind der DJ und schieben den Mixer zum Land, das am n\u00e4chsten ist.',
+    txtRadioIOS:'Schalte den Ton ein: Der Radiosender des Landes des n\u00e4chsten Flugzeugs l\u00e4uft. Auf iPhone und iPad schaltet er sofort um, ohne \u00dcberblendung.',
+    end:'Schwelle', d_n:'Nord', d_s:'S\u00fcd', d_e:'Ost', d_w:'West', d_ne:'Nordost', d_sw:'S\u00fcdwest', language:'Sprache', welcomeHost:'Willkommen {c}, dem Land von {x}!', runway:'Bahn', d_se:'S\u00fcdost', d_nw:'Nordwest', pickRunwayAria:'Bahnende w\u00e4hlen',
+    iDiscover:'Ich entdecke gern:',
+    genreAria:'Genre zum Entdecken',
+    g_indie:'Indie',
+    g_electronic:'Elektronisch',
+    g_punk:'Punk',
+    g_metal:'Metal',
+    g_singersongwriter:'Singer-Songwriter',
+    g_reggae:'Reggae',
+    g_blues:'Blues',
+    g_soul:'Soul',
+    discIntro:'Schalte den Ton ein. Jedes Flugzeug, das \u00fcber dich fliegt, bringt einen K\u00fcnstler aus seinem Land in deinem Genre mit: ein 30-Sekunden-Ausschnitt, dann der n\u00e4chste aus diesem Land, bis ein neues Flugzeug kommt.',
+    nowDiscovered:'Gerade entdeckt',
+    fav:'Merken',
+    faved:'Gemerkt',
+    next:'N\u00e4chster K\u00fcnstler',
+    spotifyFull:'In Spotify weiterh\u00f6ren',
+    searchingArtist:'Suche {g} aus {c}\u2026',
+    noArtist:'Kein {g} aus {c} gefunden. Hier ist etwas anderes aus diesem Land.',
+    noArtistAtAll:'Kein Ausschnitt aus {c} gefunden. Warte auf das n\u00e4chste Flugzeug.',
+    waitingFirst:'Warte, bis ein Flugzeug in deinen Radius kommt\u2026',
+    upNextFrom:'Gleich: {c} \u00b7 {a}',
+    myFinds:'Meine Entdeckungen',
+    noFinds:'Noch nichts gemerkt. Tippe bei einem Titel, der dir gef\u00e4llt, auf \u2661 Merken.',
+    copyList:'Liste kopieren',
+    copied:'Kopiert!',
+    remove:'Entfernen',
+    viaFlight:'\u00fcber {f}',
+    replay:'{s} noch einmal spielen',
+    playlistEmpty:'Noch nichts entdeckt. Schalte den Ton ein.',
+    backLiveSub:'die Flugzeuge w\u00e4hlen wieder',
+    srcNote:'K\u00fcnstler: MusicBrainz \u00b7 Ausschnitte: Apple Music \u00b7 gemerkte Titel bleiben nur in diesem Browser.',
+  },
+};
+const LANGS = ['nl', 'en', 'de'];
+const LANG = (() => {
+  try { const l = localStorage.getItem('flyLang'); if (LANGS.includes(l)) return l; } catch(e){}
+  for (const l of (navigator.languages || [navigator.language || ''])){
+    const p = String(l).slice(0, 2).toLowerCase();
+    if (LANGS.includes(p)) return p;
+  }
+  return 'en';
+})();
+const LOCALE = {nl:'nl-NL', en:'en-GB', de:'de-DE'}[LANG];
+function t(key, vars){
+  let s = I18N[LANG][key] ?? I18N.en[key] ?? key;
+  if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? '');
+  return s;
+}
+const dec = (n, digits) => Number(n).toLocaleString(LOCALE, {minimumFractionDigits: digits, maximumFractionDigits: digits});
+const regionNames = (() => { try { return new Intl.DisplayNames([LOCALE], {type: 'region'}); } catch(e){ return null; } })();
+const countryName = (iso, fallback) => { try { return (iso && regionNames?.of(String(iso).toUpperCase())) || fallback || ''; } catch(e){ return fallback || ''; } };
+function applyI18n(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-attr]').forEach(e => {
+    e.dataset.i18nAttr.split(';').forEach(pair => { const [attr, key] = pair.split(':'); e.setAttribute(attr, t(key)); });
+  });
+  document.querySelectorAll('.langs [data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === LANG));
+}
+function setLang(l){
+  try { localStorage.setItem('flyLang', l); } catch(e){}
+  location.reload();
+}
+
+/* ---------- Config ---------- */
+const AIRPORTS = [["BIAR","AEY","Akureyri","IS",65.6566,-18.072],["BIKF","KEF","Keflavik","IS",63.985,-22.6056],["BKPR","PRN","Pri\u0161tina Adem Jashari","XK",42.5728,21.0358],["EBBR","BRU","Brussels","BE",50.9014,4.4844],["EBCI","CRL","Brussels South Charleroi","BE",50.462,4.4596],["EBOS","OST","Ostend-Bruges","BE",51.1998,2.8747],["EDDB","BER","Berlin Brandenburg","DE",52.3617,13.5023],["EDDC","DRS","Dresden","DE",51.1341,13.7678],["EDDE","ERF","Erfurt-Weimar","DE",50.9783,10.9607],["EDDF","FRA","Frankfurt Main","DE",50.0267,8.5584],["EDDG","FMO","M\u00fcnster Osnabr\u00fcck","DE",52.1338,7.6885],["EDDH","HAM","Hamburg Helmut Schmidt","DE",53.6304,9.9882],["EDDK","CGN","Cologne Bonn","DE",50.8659,7.1427],["EDDL","DUS","D\u00fcsseldorf","DE",51.2895,6.7668],["EDDM","MUC","Munich","DE",48.3538,11.7861],["EDDN","NUE","Nuremberg","DE",49.4987,11.0781],["EDDP","LEJ","Leipzig/Halle","DE",51.4207,12.2327],["EDDS","STR","Stuttgart","DE",48.6899,9.222],["EDDV","HAJ","Hannover","DE",52.4611,9.6851],["EDDW","BRE","Bremen","DE",53.0468,8.7893],["EDFH","HHN","Frankfurt-Hahn","DE",49.9464,7.2617],["EDJA","FMM","Memmingen Allgau","DE",47.9881,10.2382],["EDLP","PAD","Paderborn Lippstadt","DE",51.6125,8.6175],["EDLV","NRN","Weeze (Niederrhein)","DE",51.6014,6.1412],["EDLW","DTM","Dortmund","DE",51.5183,7.6122],["EDNY","FDH","Bodensee Friedrichshafen","DE",47.6713,9.5115],["EDSB","FKB","Karlsruhe Baden-Baden","DE",48.7794,8.0805],["EDVK","KSF","Kassel","DE",51.4184,9.3916],["EETN","TLL","Lennart Meri Tallinn","EE",59.4132,24.8326],["EFHK","HEL","Helsinki Vantaa","FI",60.3184,24.9633],["EFIV","IVL","Ivalo","FI",68.6073,27.4053],["EFKT","KTT","Kittil\u00e4","FI",67.701,24.8468],["EFKU","KUO","Kuopio","FI",63.0071,27.7978],["EFLP","LPP","Lappeenranta","FI",61.0446,28.1447],["EFOU","OUL","Oulu","FI",64.9301,25.3546],["EFRO","RVN","Rovaniemi","FI",66.5633,25.8298],["EFTP","TMP","Tampere-Pirkkala","FI",61.4141,23.6044],["EFTU","TKU","Turku","FI",60.5141,22.2628],["EFVA","VAA","Vaasa","FI",63.0502,21.7625],["EGAA","BFS","Belfast","GB",54.6575,-6.2158],["EGBB","BHX","Birmingham","GB",52.4539,-1.748],["EGCC","MAN","Manchester","GB",53.3494,-2.2795],["EGFF","CWL","Cardiff","GB",51.3967,-3.3433],["EGGD","BRS","Bristol","GB",51.3823,-2.7165],["EGGP","LPL","Liverpool John Lennon","GB",53.3349,-2.8496],["EGGW","LTN","London Luton","GB",51.8747,-0.3683],["EGKK","LGW","London Gatwick","GB",51.1487,-0.1857],["EGLL","LHR","London Heathrow","GB",51.4707,-0.4599],["EGNM","LBA","Leeds Bradford","GB",53.8659,-1.6606],["EGNS","IOM","Isle of Man","IM",54.0831,-4.6239],["EGNT","NCL","Newcastle","GB",55.038,-1.6896],["EGNX","EMA","East Midlands","GB",52.8311,-1.3281],["EGPD","ABZ","Aberdeen","GB",57.2019,-2.1978],["EGPF","GLA","Glasgow","GB",55.8719,-4.4331],["EGPH","EDI","Edinburgh","GB",55.9501,-3.3723],["EGPK","PIK","Glasgow Prestwick","GB",55.5015,-4.5772],["EGSS","STN","London Stansted","GB",51.885,0.235],["EHAM","AMS","Amsterdam Schiphol","NL",52.3086,4.7639],["EHBK","MST","Maastricht Aachen","NL",50.9111,5.7694],["EHEH","EIN","Eindhoven","NL",51.4501,5.3745],["EHGG","GRQ","Groningen Eelde","NL",53.1191,6.5777],["EHRD","RTM","Rotterdam The Hague","NL",51.9569,4.4372],["EICK","ORK","Cork","IE",51.8413,-8.4911],["EIDW","DUB","Dublin","IE",53.4287,-6.2621],["EIKN","NOC","Ireland West Knock","IE",53.9104,-8.817],["EINN","SNN","Shannon","IE",52.702,-8.9248],["EKAH","AAR","Aarhus","DK",56.3033,10.6183],["EKBI","BLL","Billund","DK",55.7403,9.157],["EKCH","CPH","Copenhagen Kastrup","DK",55.6179,12.656],["EKOD","ODE","Odense Hans Christian Andersen","DK",55.4753,10.3272],["EKVG","FAE","V\u00e1gar","FO",62.0633,-7.2758],["EKYT","AAL","Aalborg","DK",57.0948,9.8499],["ELLX","LUX","Luxembourg-Findel","LU",49.6268,6.2121],["ENAL","AES","\u00c5lesund","NO",62.5604,6.1108],["ENBO","BOO","Bod\u00f8","NO",67.2692,14.3653],["ENBR","BGO","Bergen , Flesland","NO",60.2934,5.2181],["ENCN","KRS","Kristiansand","NO",58.2042,8.0854],["ENEV","EVE","Harstad/Narvik","NO",68.4913,16.6781],["ENGM","OSL","Oslo-Gardermoen","NO",60.1939,11.1004],["ENTC","TOS","Troms\u00f8","NO",69.6833,18.9189],["ENTO","TRF","Sandefjord , Torp","NO",59.1867,10.2586],["ENVA","TRD","Trondheim , V\u00e6rnes","NO",63.4578,10.924],["ENZV","SVG","Stavanger , Sola","NO",58.8767,5.6378],["EPGD","GDN","Gda\u0144sk Lech Wa\u0142\u0119sa","PL",54.3776,18.4662],["EPKK","KRK","Krak\u00f3w John Paul II","PL",50.0777,19.7848],["EPKT","KTW","Katowice Wojciech Korfanty","PL",50.476,19.0807],["EPLB","LUZ","Lublin","PL",51.2402,22.7135],["EPLL","LCJ","\u0141\u00f3d\u017a W\u0142adys\u0142aw Reymont","PL",51.7219,19.3981],["EPMO","WMI","Warsaw Modlin","PL",52.4511,20.6518],["EPPO","POZ","Pozna\u0144-\u0141awica","PL",52.4216,16.8234],["EPRZ","RZE","Rzesz\u00f3w-Jasionka","PL",50.1098,22.0242],["EPSC","SZZ","Solidarity Szczecin\u2013Goleni\u00f3w","PL",53.5847,14.9022],["EPWA","WAW","Warsaw Chopin","PL",52.1657,20.9671],["EPWR","WRO","Copernicus Wroc\u0142aw","PL",51.1037,16.8821],["ESGG","GOT","G\u00f6teborg Landvetter","SE",57.6628,12.2798],["ESKN","NYO","Stockholm Skavsta","SE",58.7897,16.9115],["ESKS","SCR","Scandinavian Mountains","SE",61.1651,12.8335],["ESMS","MMX","Malm\u00f6 Sturup","SE",55.5356,13.3763],["ESNQ","KRN","Kiruna","SE",67.822,20.3368],["ESNU","UME","Ume\u00e5","SE",63.7918,20.2828],["ESOW","VST","Stockholm V\u00e4ster\u00e5s","SE",59.5894,16.6336],["ESPA","LLA","Lule\u00e5","SE",65.5438,22.122],["ESSA","ARN","Stockholm-Arlanda","SE",59.6485,17.9288],["ESSL","LPI","Link\u00f6ping City","SE",58.4049,15.6845],["ESSV","VBY","Visby","SE",57.6628,18.3462],["EVRA","RIX","Riga","LV",56.9208,23.9707],["EYKA","KUN","Kaunas","LT",54.964,24.0858],["EYPA","PLQ","Palanga","LT",55.9732,21.0939],["EYVI","VNO","Vilnius","LT",54.6341,25.2858],["LATI","TIA","Tirana Mother Teresa","AL",41.4147,19.7206],["LBBG","BOJ","Burgas","BG",42.5699,27.5152],["LBPD","PDV","Plovdiv","BG",42.0678,24.8508],["LBSF","SOF","Sofia","BG",42.6964,23.4177],["LBWN","VAR","Varna","BG",43.2321,27.8251],["LCLK","LCA","Larnaca","CY",34.8751,33.6249],["LCPH","PFO","Paphos","CY",34.718,32.4857],["LDDU","DBV","Dubrovnik Ru\u0111er Bo\u0161kovi\u0107","HR",42.5622,18.2655],["LDPL","PUY","Pula","HR",44.8935,13.9222],["LDRI","RJK","Rijeka","HR",45.2164,14.5709],["LDSP","SPU","Split Saint Jerome","HR",43.5389,16.298],["LDZA","ZAG","Zagreb Franjo Tu\u0111man","HR",45.7429,16.0688],["LDZD","ZAD","Zadar","HR",44.097,15.3536],["LEAL","ALC","Alicante-Elche Miguel Hern\u00e1ndez","ES",38.2822,-0.5582],["LEAS","OVD","Asturias","ES",43.5636,-6.0346],["LEBB","BIO","Bilbao","ES",43.3011,-2.9106],["LEBL","BCN","Josep Tarradellas Barcelona-El Prat","ES",41.2971,2.0785],["LEGE","GRO","Girona-Costa Brava","ES",41.9046,2.7618],["LEIB","IBZ","Ibiza","ES",38.8729,1.3731],["LEMD","MAD","Adolfo Su\u00e1rez Madrid\u2013Barajas","ES",40.4934,-3.5722],["LEMG","AGP","M\u00e1laga-Costa del Sol","ES",36.6749,-4.4991],["LEMH","MAH","Menorca","ES",39.8626,4.2187],["LEMI","RMU","Region of Murcia","ES",37.8029,-1.1249],["LEPA","PMI","Palma de Mallorca","ES",39.5517,2.7388],["LERS","REU","Reus","ES",41.1475,1.1684],["LEST","SCQ","Santiago-Rosal\u00eda de Castro","ES",42.8963,-8.4151],["LEVC","VLC","Valencia","ES",39.4892,-0.481],["LEZG","ZAZ","Zaragoza","ES",41.6662,-1.0415],["LEZL","SVQ","Seville","ES",37.418,-5.8931],["LFBD","BOD","Bordeaux\u2013M\u00e9rignac","FR",44.8287,-0.7154],["LFBO","TLS","Toulouse-Blagnac","FR",43.6291,1.3638],["LFKB","BIA","Bastia-Poretta airport","FR",42.5527,9.4837],["LFKF","FSC","Figari Sud-Corse","FR",41.5018,9.0971],["LFLC","CFE","Clermont-Ferrand Auvergne airport","FR",45.7867,3.1692],["LFLL","LYS","Lyon Saint-Exup\u00e9ry","FR",45.726,5.0901],["LFML","MRS","Marseille Provence","FR",43.4381,5.2125],["LFMN","NCE","Nice-C\u00f4te d'Azur","FR",43.6584,7.2159],["LFMT","MPL","Montpellier-M\u00e9diterran\u00e9e","FR",43.5762,3.963],["LFOB","BVA","Beauvais-Till\u00e9 airport","FR",49.4544,2.1128],["LFPG","CDG","Charles de Gaulle","FR",49.009,2.5541],["LFPO","ORY","Paris-Orly","FR",48.7295,2.359],["LFQQ","LIL","Lille","FR",50.5666,3.1024],["LFRB","BES","Brest Bretagne airport","FR",48.4479,-4.4185],["LFRS","NTE","Nantes Atlantique","FR",47.1532,-1.6107],["LFSB","BSL","EuroAirport Basel\u2013Mulhouse\u2013Freiburg","FR",47.6007,7.5211],["LFST","SXB","Strasbourg","FR",48.5383,7.6282],["LGAV","ATH","Athens Eleftherios Venizelos","GR",37.9364,23.9445],["LGIR","HER","Heraklion Nikos Kazantzakis","GR",35.3397,25.1803],["LGKR","CFU","Corfu Ioannis Kapodistrias","GR",39.6014,19.9122],["LGKV","KVA","Kavala Alexander the Great","GR",40.9133,24.6192],["LGSA","CHQ","Chania","GR",35.5312,24.1507],["LGSR","JTR","Santorini","GR",36.4,25.4786],["LGTS","SKG","Thessaloniki Macedonia","GR",40.5193,22.97],["LHBP","BUD","Budapest Liszt Ferenc","HU",47.4302,19.2624],["LHDC","DEB","Debrecen","HU",47.4895,21.6163],["LHPP","PEV","P\u00e9cs-Pog\u00e1ny","HU",45.9889,18.242],["LIBD","BRI","Bari Karol Wojty\u0142a","IT",41.1389,16.7606],["LIBP","PSR","Abruzzo","IT",42.4311,14.183],["LIBR","BDS","Brindisi","IT",40.6576,17.947],["LICA","SUF","Lamezia Terme Sant'Eufemia","IT",38.9062,16.246],["LICC","CTA","Catania-Fontanarossa","IT",37.4668,15.0664],["LICJ","PMO","Falcone\u2013Borsellino","IT",38.176,13.091],["LIEE","CAG","Cagliari Elmas","IT",39.2515,9.0543],["LIEO","OLB","Olbia Costa Smeralda","IT",40.899,9.5185],["LIMC","MXP","Milan Malpensa","IT",45.6306,8.7281],["LIME","BGY","Il Caravaggio","IT",45.6694,9.7089],["LIMF","TRN","Turin","IT",45.2008,7.6496],["LIMJ","GOA","Genoa Cristoforo Colombo","IT",44.412,8.8407],["LIML","LIN","Milano Linate","IT",45.4451,9.2767],["LIPE","BLQ","Bologna Guglielmo Marconi","IT",44.5354,11.2887],["LIPH","TSF","Treviso","IT",45.6484,12.1944],["LIPQ","TRS","Trieste","IT",45.8279,13.4667],["LIPR","RMI","Federico Fellini","IT",44.02,12.6122],["LIPX","VRN","Verona Villafranca Valerio Catullo","IT",45.395,10.8873],["LIPZ","VCE","Venice Marco Polo","IT",45.5053,12.3519],["LIRA","CIA","Ciampino\u2013G. B. Pastine","IT",41.7988,12.5953],["LIRF","FCO","Rome\u2013Fiumicino Leonardo da Vinci","IT",41.8045,12.252],["LIRN","NAP","Naples","IT",40.886,14.2908],["LIRP","PSA","Pisa","IT",43.6839,10.3927],["LIRQ","FLR","Florence , Peretola","IT",43.8086,11.2028],["LIRZ","PEG","Perugia San Francesco d'Assisi \u2013 Umbria","IT",43.0959,12.5132],["LJLJ","LJU","Ljubljana Jo\u017ee Pu\u010dnik","SI",46.2237,14.4576],["LKCS","JCL","\u010cesk\u00e9 Bud\u011bjovice South Bohemian","CZ",48.9482,14.4283],["LKKV","KLV","Karlovy Vary","CZ",50.203,12.915],["LKMT","OSR","Leo\u0161 Jan\u00e1\u010dek Ostrava","CZ",49.6963,18.1111],["LKPD","PED","Pardubice","CZ",50.015,15.7398],["LKPR","PRG","V\u00e1clav Havel Prague","CZ",50.1009,14.2599],["LMML","MLA","Malta","MT",35.8459,14.4915],["LOWG","GRZ","Graz","AT",46.9911,15.4396],["LOWI","INN","Innsbruck","AT",47.2602,11.344],["LOWK","KLU","Klagenfurt","AT",46.6425,14.3377],["LOWL","LNZ","Linz-H\u00f6rsching","AT",48.2354,14.1881],["LOWS","SZG","Salzburg","AT",47.7933,13.0043],["LOWW","VIE","Vienna","AT",48.1103,16.5697],["LPFR","FAO","Faro - Gago Coutinho","PT",37.0159,-7.9709],["LPMA","FNC","Cristiano Ronaldo","PT",32.6978,-16.7746],["LPPD","PDL","Jo\u00e3o Paulo II","PT",37.7412,-25.6979],["LPPR","OPO","Francisco de S\u00e1 Carneiro","PT",41.2481,-8.6814],["LPPT","LIS","Lisbon Humberto Delgado","PT",38.7813,-9.1359],["LQBK","BNX","Banja Luka","BA",44.9414,17.2975],["LQMO","OMO","Mostar","BA",43.2825,17.8461],["LQSA","SJJ","Sarajevo","BA",43.8246,18.3315],["LQTZ","TZL","Tuzla","BA",44.4599,18.7236],["LRBC","BCM","Bac\u0103u George Enescu","RO",46.5219,26.9103],["LRBS","BBU","Bucharest B\u0103neasa Aurel Vlaicu","RO",44.5031,26.1029],["LRBV","GHV","Bra\u0219ov-Ghimbav","RO",45.7056,25.5229],["LRCK","CND","Mihail Kog\u0103lniceanu","RO",44.3622,28.4883],["LRCL","CLJ","Avram Iancu Cluj","RO",46.786,23.6857],["LRCV","CRA","Craiova","RO",44.3181,23.8886],["LRIA","IAS","Ia\u015fi","RO",47.1796,27.6214],["LROD","OMR","Oradea","RO",47.0253,21.9025],["LROP","OTP","Bucharest Henri Coand\u0103","RO",44.5718,26.1033],["LRSB","SBZ","Sibiu","RO",45.7858,24.0867],["LRSV","SCV","Suceava \u0218tefan cel Mare","RO",47.6875,26.3541],["LRTR","TSR","Timi\u0219oara Traian Vuia","RO",45.8099,21.3379],["LSGG","GVA","Geneva","CH",46.2381,6.109],["LSZH","ZRH","Z\u00fcrich","CH",47.4581,8.5481],["LTAI","AYT","Antalya","TR",36.8987,30.8005],["LTBJ","ADB","Adnan Menderes","TR",38.2924,27.157],["LTFJ","SAW","Istanbul Sabiha G\u00f6k\u00e7en","TR",40.8986,29.3092],["LTFM","IST","\u0130stanbul","TR",41.2749,28.7321],["LUKK","RMO","Chi\u015fin\u0103u","MD",46.9277,28.9317],["LWOH","OHD","Ohrid St. Paul the Apostle","MK",41.18,20.7423],["LWSK","SKP","Skopje","MK",41.9581,21.6226],["LXGB","GIB","Gibraltar","GI",36.1517,-5.3498],["LYBE","BEG","Belgrade Nikola Tesla","RS",44.8184,20.3091],["LYNI","INI","Ni\u0161 Constantine the Great","RS",43.3365,21.8562],["LYPG","TGD","Podgorica / Podgorica Golubovci Airbase","ME",42.3594,19.2519],["LZIB","BTS","M. R. \u0160tef\u00e1nik","SK",48.1702,17.2127],["ULLI","LED","Pulkovo","RU",59.8003,30.2625],["ULMM","MMK","Emperor Nicholas II Murmansk","RU",68.7817,32.7508],["UMBB","BQT","Brest","BY",52.1081,23.8968],["UMKK","KGD","Khrabrovo","RU",54.8916,20.5986],["UMMS","MSQ","Minsk National","BY",53.8881,28.04],["URKK","KRR","Krasnodar Pashkovsky","RU",45.0345,39.1742],["URMM","MRV","Mineralnye Vody","RU",44.2251,43.0819],["URSS","AER","Sochi","RU",43.4499,39.9566],["URWW","VOG","Volgograd","RU",48.7813,44.3392],["UUDD","DME","Domodedovo","RU",55.4088,37.9063],["UUDL","IAR","Golden Ring Yaroslavl","RU",57.5607,40.1574],["UUEE","SVO","Sheremetyevo","RU",55.9775,37.3867],["UUWW","VKO","Vnukovo","RU",55.5915,37.2615],["UWGG","GOJ","Nizhny Novgorod / Strigino","RU",56.2274,43.7852],["UWPS","SKX","Saransk","RU",54.1251,45.2123],["UWSG","GSV","Gagarin","RU",51.7128,46.1711],["UWUU","UFA","Ufa","RU",54.5575,55.8744],["UWWW","KUF","Kurumoch","RU",53.5049,50.1643]];
+const RWYS = [["BIAR","01/19","",65.6549,-18.0699,65.6672,-18.074],["BIKF","01/19","",63.96449,-22.60543,63.99186,-22.60541],["BIKF","10/28","",63.98503,-22.65498,63.98503,-22.59237],["BKPR","17/35","",42.58533,21.0346,42.55804,21.03737],["EBBR","01/19","",50.8869,4.49142,50.9129,4.50202],["EBBR","07L/25R","",50.8989,4.45566,50.9126,4.50263],["EBBR","07R/25L","",50.889,4.48042,50.8989,4.5233],["EBCI","06/24","",50.45517,4.43671,50.46656,4.47592],["EBOS","08/26","",51.1966,2.85277,51.2034,2.89727],["EDDB","06L/24R","",52.36672,13.48093,52.37841,13.53021],["EDDB","06R/24L","",52.34544,13.46843,52.35843,13.52318],["EDDC","04/22","",51.12466,13.75468,51.14404,13.78135],["EDDE","09/27","",50.98128,10.93973,50.97834,10.97647],["EDDF","07C/25C","",50.0326,8.53463,50.0451,8.58698],["EDDF","07L/25R","",50.0371,8.49708,50.0458,8.53372],["EDDF","07R/25L","",50.0275,8.53417,50.0401,8.58653],["EDDF","18/36","",50.03415,8.52594,49.99849,8.5263],["EDDG","07/25","",52.1315,7.67006,52.1379,7.70002],["EDDH","05/23","",53.6183,9.96371,53.6371,10.0018],["EDDH","15/33","",53.6544,9.97521,53.6251,10.0005],["EDDK","06/24","",50.8601,7.12378,50.8697,7.15527],["EDDK","13L/31R","",50.8805,7.12908,50.8552,7.16569],["EDDK","13R/31L","",50.8708,7.12086,50.8585,7.13874],["EDDL","05L/23R","",51.2837,6.74872,51.2984,6.77965],["EDDL","05R/23L","",51.2796,6.75199,51.2959,6.78622],["EDDM","08L/26R","",48.3628,11.7676,48.3669,11.8212],["EDDM","08R/26L","",48.3407,11.751,48.3448,11.8046],["EDDN","10/28","",49.5005,11.0592,49.4969,11.096],["EDDP","08L/26R","",51.4312,12.2158,51.4336,12.2674],["EDDP","08R/26L","",51.41161,12.20465,51.41402,12.25625],["EDDS","07/25","",48.6857,9.20013,48.694,9.2438],["EDDV","09L/27R","",52.46838,9.64827,52.46683,9.70415],["EDDV","09R/27L","",52.455,9.67677,52.454,9.71115],["EDDW","09/27","",53.04648,8.77006,53.04737,8.80934],["EDFH","03/21","",49.9314,7.24688,49.9602,7.27529],["EDJA","06/24","",47.98331,10.22564,47.99536,10.25599],["EDLP","05/23","",51.6087,8.60318,51.6194,8.62959],["EDLV","09/27","",51.6028,6.12454,51.6021,6.15973],["EDLW","06/24","",51.5147,7.6019,51.5235,7.62699],["EDNY","06/24","",47.666,9.49789,47.6766,9.52509],["EDSB","03/21","",48.7679,8.06976,48.7908,8.09125],["EDVK","09/27","",51.4218,9.37423,51.4198,9.41008],["EETN","08/26","",59.41334,24.80591,59.41317,24.86721],["EFHK","04L/22R","",60.3129,24.9039,60.3315,24.9447],["EFHK","04R/22L","",60.30947,24.93234,60.33069,24.97909],["EFHK","15/33","",60.3303,24.9645,60.3071,24.9883],["EFIV","04/22","",68.5996,27.3829,68.6149,27.4278],["EFKT","16/34","",67.7119,24.8398,67.6901,24.8539],["EFKU","15/33","",63.0181,27.7876,62.9949,27.8091],["EFLP","06/24","",61.0401,28.1231,61.049,28.1657],["EFOU","12/30","",64.9358,25.3319,64.9243,25.3772],["EFRO","03/21","",66.5541,25.81,66.5755,25.8509],["EFTP","06/24","",61.4089,23.5816,61.4194,23.6272],["EFTU","08/26","",60.5131,22.2401,60.5151,22.2855],["EFVA","16/34","",63.0621,21.7545,63.0392,21.7699],["EGAA","07/25","",54.6523,-6.23524,54.6628,-6.19618],["EGAA","17/35","",54.6579,-6.22862,54.6426,-6.21999],["EGBB","15/33","",52.4656,-1.76111,52.44296,-1.73589],["EGCC","05L/23R","",53.3451,-2.29274,53.3624,-2.25714],["EGCC","05R/23L","",53.332,-2.31066,53.3491,-2.27499],["EGFF","12/30","",51.4015,-3.35868,51.3918,-3.32799],["EGGD","09/27","",51.3821,-2.7335,51.3832,-2.70467],["EGGP","09/27","",53.33285,-2.86688,53.33442,-2.83265],["EGGW","07/25","",51.872,-0.38355,51.8772,-0.35333],["EGKK","08L/26R","",51.14689,-0.2126,51.15183,-0.1768],["EGKK","08R/26L","",51.1451,-0.21235,51.15149,-0.16599],["EGLL","09L/27R","",51.47749,-0.48944,51.47768,-0.43323],["EGLL","09R/27L","",51.46478,-0.48681,51.46496,-0.43405],["EGNM","14/32","",53.8734,-1.67207,53.8584,-1.64907],["EGNS","03/21","",54.07778,-4.63171,54.0873,-4.62312],["EGNS","08/26","",54.08139,-4.63895,54.08535,-4.60738],["EGNT","07/25","",55.0335,-1.70634,55.0423,-1.67327],["EGNX","09/27","",52.8306,-1.34957,52.8314,-1.30667],["EGPD","16/34","",57.2095,-2.20341,57.1943,-2.19216],["EGPF","05/23","",55.8635,-4.44906,55.8799,-4.41831],["EGPH","06/24","",55.944,-3.39014,55.9559,-3.35506],["EGPK","02/20","",55.4884,-4.58741,55.5034,-4.57576],["EGPK","12/30","",55.5164,-4.61476,55.5024,-4.57448],["EGSS","04/22","",51.87508,0.21993,51.89517,0.25005],["EHAM","04/22","Oostbaan",52.3004,4.78348,52.314,4.80302],["EHAM","06/24","Kaagbaan",52.2879,4.73402,52.3046,4.77752],["EHAM","09/27","Buitenveldertbaan",52.3166,4.74635,52.3184,4.79689],["EHAM","18C/36C","Zwanenburgbaan",52.3314,4.74003,52.3018,4.7375],["EHAM","18L/36R","Aalsmeerbaan",52.3213,4.77996,52.2908,4.77735],["EHAM","18R/36L","Polderbaan",52.3627,4.71193,52.3286,4.70884],["EHBK","03/21","",50.9018,5.76005,50.9208,5.77923],["EHEH","03/21","",51.4391,5.36213,51.4612,5.38689],["EHGG","05/23","",53.11108,6.5609,53.12495,6.59027],["EHRD","06/24","",51.9521,4.42824,51.9628,4.45508],["EICK","07/25","",51.8416,-8.496,51.847,-8.47912],["EICK","16/34","",51.8503,-8.49644,51.8323,-8.48579],["EIDW","10L/28R","",53.43716,-6.28062,53.4352,-6.24496],["EIDW","10R/28L","",53.42243,-6.29007,53.4203,-6.25058],["EIDW","16/34","",53.437,-6.26198,53.4199,-6.24959],["EIKN","08/26","",53.9083,-8.83565,53.9123,-8.80133],["EINN","06/24","",52.6932,-8.94352,52.7108,-8.9061],["EKAH","10L/28R","",56.3074,10.5978,56.303,10.6419],["EKAH","10R/28L","",56.3055,10.5976,56.3012,10.6405],["EKBI","09/27","",55.7397,9.13244,55.7412,9.18177],["EKCH","04L/22R","",55.5922,12.60354,55.61654,12.64117],["EKCH","04R/22L","",55.6031,12.633,55.6254,12.6676],["EKCH","12/30","",55.62629,12.63333,55.61252,12.67053],["EKOD","06/24","",55.4715,10.3153,55.4798,10.3405],["EKVG","12/30","",62.0662,-7.28761,62.061,-7.26648],["EKYT","08L/26R","",57.0937,9.83338,57.0965,9.87687],["EKYT","08R/26L","",57.0919,9.83547,57.0946,9.87724],["ELLX","06/24","",49.6177,6.18746,49.6355,6.23556],["ENAL","06/24","",62.55592,6.08984,62.56482,6.13052],["ENBO","07/25","",67.2653,14.3183,67.2717,14.3952],["ENBR","17/35","",60.3066,5.2137,60.2801,5.22258],["ENCN","03/21","",58.1967,8.07541,58.2117,8.09527],["ENEV","17/35","",68.5039,16.6767,68.4787,16.6796],["ENGM","01L/19R","",60.185,11.0737,60.2161,11.0917],["ENGM","01R/19L","",60.1758,11.1078,60.2012,11.1225],["ENTC","18/36","",69.69378,18.9259,69.67237,18.91162],["ENTO","17/35","",59.19895,10.25833,59.17372,10.25891],["ENVA","09/27","",63.4577,10.8894,63.4576,10.9465],["ENZV","10/28","",58.8818,5.60479,58.8756,5.64559],["ENZV","18/36","",58.895,5.63729,58.8694,5.63805],["EPGD","11/29","",54.3811,18.452,54.3713,18.4917],["EPKK","07/25","",50.0754,19.7681,50.0802,19.8029],["EPKT","08/26","",50.4761,19.0596,50.476,19.1046],["EPLB","07/25","",51.2376,22.6958,51.2427,22.7311],["EPLL","07/25","",51.71622,19.37219,51.72367,19.40632],["EPMO","08/26","",52.4495,20.6336,52.4527,20.67],["EPPO","10/28","",52.4249,16.8061,52.4182,16.841],["EPRZ","09/27","",50.1102,22.0015,50.1096,22.0463],["EPRZ","09ES/27ES","",50.1044,22.0426,50.1056,22.054],["EPSC","13/31","",53.5921,14.8879,53.5774,14.9165],["EPWA","11/29","",52.1715,20.9467,52.161,20.9839],["EPWA","15/33","",52.1786,20.9559,52.1494,20.9814],["EPWR","11/29","",51.1088,16.8658,51.099,16.898],["ESGG","03/21","",57.6495,12.2677,57.6761,12.2919],["ESKN","08/26","",58.7867,16.8804,58.7898,16.9298],["ESKN","16/34","",58.8014,16.9041,58.784,16.9151],["ESKS","15/33","",61.17412,12.82125,61.15539,12.84682],["ESMS","17/35","",55.5481,13.3738,55.5231,13.3789],["ESNQ","03/21","",67.8127,20.3203,67.8313,20.3532],["ESNU","14/32","",63.7985,20.2693,63.7831,20.3003],["ESOW","01/19","",59.57848,16.62925,59.60117,16.63848],["ESPA","14/32","",65.5548,22.0974,65.5327,22.1466],["ESSA","01L/19R","",59.6373,17.9132,59.6664,17.9238],["ESSA","01R/19L","",59.6264,17.9507,59.6485,17.9587],["ESSA","08/26","",59.6584,17.9361,59.6639,17.9792],["ESSL","11/29","",58.4099,15.6634,58.4027,15.6971],["ESSV","03/21","",57.6544,18.3402,57.6712,18.3522],["ESSV","10/28","",57.651,18.3297,57.649,18.3477],["EVRA","18/36","",56.9351,23.9731,56.90644,23.96835],["EYKA","08/26","",54.9627,24.0595,54.96515,24.11006],["EYPA","01/19","",55.96442,21.09031,55.98177,21.0973],["EYVI","01/19","",54.6237,25.2785,54.6446,25.2931],["LATI","17/35","",41.427,19.7189,41.4025,19.7222],["LBBG","04/22","",42.5598,27.5016,42.5804,27.5289],["LBPD","12/30","",42.0746,24.8388,42.061,24.8629],["LBSF","09/27","",42.6975,23.3995,42.69516,23.43966],["LBWN","09/27","",43.2334,27.8098,43.2306,27.8406],["LCLK","04/22","",34.86418,33.61225,34.8832,33.6355],["LCPH","11/29","",34.7223,32.4719,34.7138,32.4996],["LDDU","11/29","",42.56957,18.24753,42.55582,18.28219],["LDPL","09/27","",44.8931,13.9036,44.8939,13.9407],["LDRI","14/32","",45.2257,14.5614,45.2076,14.5802],["LDSP","05/23","",43.5321,16.2856,43.546,16.3106],["LDZA","04/22","",45.73188,16.05197,45.75191,16.08243],["LDZD","04/22","",44.0794,15.3412,44.0928,15.3577],["LDZD","13/31","",44.1164,15.3357,44.1004,15.3574],["LEAL","10/28","",38.2845,-0.575,38.2798,-0.54132],["LEAS","11/29","",43.5666,-6.04759,43.5605,-6.02165],["LEBB","10/28","",43.3033,-2.93703,43.3013,-2.91254],["LEBB","12/30","",43.3063,-2.92494,43.2958,-2.8963],["LEBL","02/20","",41.28774,2.08483,41.30929,2.09467],["LEBL","06L/24R","",41.29324,2.06725,41.30573,2.10375],["LEBL","06R/24L","",41.28231,2.07434,41.29222,2.10328],["LEGE","01/19","",41.8949,2.75826,41.9157,2.76612],["LEIB","06/24","",38.8669,1.35887,38.8787,1.38738],["LEMD","14L/32R","",40.4949,-3.55787,40.47,-3.53258],["LEMD","14R/32L","",40.4849,-3.57601,40.4557,-3.54638],["LEMD","18L/36R","",40.5326,-3.55938,40.5011,-3.55921],["LEMD","18R/36L","",40.5318,-3.57485,40.4926,-3.57463],["LEMG","12/30","",36.691,-4.5078,36.6796,-4.48053],["LEMG","13/31","",36.6845,-4.51259,36.6654,-4.48582],["LEMH","01/19","",39.85126,4.21632,39.87217,4.22062],["LEMI","05/23","",37.7935,-1.1371,37.8128,-1.11229],["LEPA","06L/24R","",39.5471,2.71073,39.5625,2.74319],["LEPA","06R/24L","",39.5413,2.73174,39.5553,2.76153],["LERS","07/25","",41.1441,1.15586,41.152,1.18315],["LEST","17/35","",42.9118,-8.42043,42.8838,-8.41095],["LEVC","12/30","",39.49636,-0.50011,39.48362,-0.46666],["LEZG","12L/30R","",41.6691,-1.03983,41.6554,-1.00832],["LEZG","12R/30L","",41.6802,-1.08237,41.6635,-1.04371],["LEZL","09/27","",37.4179,-5.91208,37.418,-5.8741],["LFBD","05/23","",44.8191,-0.72898,44.8387,-0.701],["LFBD","11/29","",44.8316,-0.72924,44.8254,-0.6999],["LFBO","14L/32R","",43.6374,1.35762,43.6156,1.38022],["LFBO","14R/32L","",43.6441,1.34593,43.619,1.3721],["LFKB","16/34","",42.5635,9.47919,42.5418,9.48827],["LFKF","05/23","",41.4947,9.08601,41.5098,9.10793],["LFLC","08/26","",45.7848,3.15082,45.7886,3.18916],["LFLL","17L/35R","",45.7349,5.09187,45.711,5.09478],["LFLL","17R/35L","",45.7466,5.08594,45.7107,5.0903],["LFML","13L/31R","",43.4491,5.19731,43.4273,5.22846],["LFML","13R/31L","",43.4413,5.20302,43.4259,5.22435],["LFMN","04L/22R","",43.6518,7.20404,43.6695,7.22851],["LFMN","04R/22L","",43.6467,7.20249,43.6656,7.22844],["LFMT","12L/30R","",43.5861,3.95573,43.5728,3.98222],["LFMT","12R/30L","",43.5758,3.95189,43.5702,3.96309],["LFOB","04/22","",49.4546,2.11302,49.4621,2.12327],["LFOB","12/30","",49.4583,2.10385,49.4462,2.13174],["LFPG","08L/26R","",48.9957,2.55274,48.9988,2.61018],["LFPG","08R/26L","",48.9929,2.56566,48.9949,2.60243],["LFPG","09L/27R","",49.0247,2.52489,49.0267,2.56169],["LFPG","09R/27L","",49.0206,2.51306,49.0237,2.57029],["LFPO","02/20","",48.7175,2.3767,48.738,2.38697],["LFPO","06/24","",48.72,2.31692,48.7355,2.36068],["LFPO","07/25","",48.7194,2.35859,48.7274,2.40207],["LFQQ","01/19","",50.5601,3.08546,50.5738,3.09114],["LFQQ","08/26","",50.5629,3.08301,50.5685,3.12223],["LFRB","07R/25L","",48.4434,-4.43835,48.4523,-4.39869],["LFRS","03/21","",47.1416,-1.61954,47.1648,-1.6019],["LFSB","07/25","",47.58794,7.51687,47.59143,7.53911],["LFSB","15/33","",47.6177,7.50986,47.58593,7.53196],["LFST","05/23","",48.5312,7.61603,48.5454,7.64044],["LGAV","03L/21R","",37.921,23.9192,37.9485,23.945],["LGAV","03R/21L","",37.9235,23.9433,37.9524,23.9704],["LGIR","09/27","",35.341,25.1612,35.339,25.1905],["LGIR","12/30","",35.3439,25.1733,35.3356,25.1873],["LGKR","16/34","",39.61252,19.90943,39.59155,19.91481],["LGKV","05/23","",40.9063,24.605,40.9217,24.6343],["LGSA","11/29","",35.5371,24.134,35.5261,24.1684],["LGSR","15/33","",36.4081,25.4751,36.3902,25.4834],["LGTS","10/28","",40.522,22.9591,40.5167,22.987],["LGTS","16/34","",40.5303,22.9676,40.5092,22.9744],["LHBP","13L/31R","",47.4454,19.2575,47.423,19.2939],["LHBP","13R/31L","",47.4487,19.2208,47.4305,19.2502],["LHDC","04R/22L","",47.4814,21.603,47.4964,21.6276],["LHPP","15/33","",45.9956,18.2383,45.9831,18.2458],["LIBD","07/25","",41.13286,16.74063,41.14233,16.77408],["LIBP","04/22","",42.4228,14.172,42.44,14.1899],["LIBR","05/23","",40.6523,17.9368,40.6626,17.9543],["LIBR","13/31","",40.6722,17.9299,40.6555,17.9503],["LICA","10/28","",38.907,16.2286,38.9038,16.256],["LICC","08/26","",37.4656,15.0527,37.4679,15.0801],["LICJ","02/20","",38.1661,13.0856,38.1832,13.0952],["LICJ","07/25","",38.1743,13.0865,38.1858,13.1208],["LIEE","14/32","",39.2608,9.04347,39.2421,9.06511],["LIEO","05/23","",40.8924,9.50569,40.9049,9.52957],["LIMC","17L/35R","",45.65038,8.72794,45.61574,8.73751],["LIMC","17R/35L","",45.64545,8.71874,45.61082,8.7283],["LIME","10/28","",45.67104,9.68979,45.66441,9.72543],["LIMF","18/36","",45.2156,7.65057,45.1859,7.64869],["LIMJ","10/28","",44.4154,8.82419,44.4085,8.85958],["LIML","17/35","",45.45622,9.27587,45.43431,9.27823],["LIPE","12/30","",44.5411,11.2729,44.5298,11.3044],["LIPH","07/25","",45.6445,12.1799,45.6523,12.209],["LIPQ","09/27","",45.828,13.4474,45.8278,13.486],["LIPR","12/30","",44.0285,12.597,44.012,12.6265],["LIPX","04/22","",45.3873,10.8763,45.4066,10.9045],["LIPZ","04L/22R","",45.4952,12.3356,45.5137,12.3594],["LIPZ","04R/22L","",45.4941,12.3377,45.5162,12.366],["LIRA","15/33","",41.8081,12.5888,41.7904,12.601],["LIRF","07/25","",41.79933,12.23214,41.80963,12.26948],["LIRF","16L/34R","",41.846,12.2615,41.8124,12.2755],["LIRF","16R/34L","",41.8155,12.2264,41.782,12.2404],["LIRN","06/24","",40.8798,14.2775,40.8923,14.304],["LIRP","03L/21R","",43.6738,10.3807,43.694,10.4015],["LIRP","03R/21L","",43.6731,10.3832,43.6946,10.4055],["LIRQ","05/23","",43.80534,11.19782,43.8147,11.21228],["LIRZ","01/19","",43.08851,12.51064,43.10769,12.51733],["LJLJ","12/30","",46.2325,14.4404,46.2149,14.4748],["LKCS","09/27","",48.9464,14.4104,48.9464,14.4445],["LKKV","11/29","",50.20685,12.90126,50.19926,12.92902],["LKMT","04/22","",49.6853,18.0932,49.7071,18.1284],["LKPD","09/27","",50.014,15.7212,50.0129,15.7561],["LKPR","06/24","",50.1018,14.2263,50.116,14.2734],["LKPR","12/30","",50.108,14.2454,50.0905,14.2817],["LMML","05/23","",35.8475,14.4601,35.8599,14.4815],["LMML","13/31","",35.8564,14.4788,35.8339,14.5068],["LOWG","16C/34C","",47.0043,15.436,46.9778,15.4433],["LOWI","08/26","",47.2588,11.3309,47.2616,11.357],["LOWK","10L/28R","",46.6459,14.3207,46.6391,14.3548],["LOWL","08/26","",48.2325,14.1674,48.2339,14.2077],["LOWS","15/33","",47.80563,12.99619,47.78206,13.01109],["LOWW","11/29","",48.1228,16.5334,48.109,16.5756],["LOWW","16/34","",48.1198,16.5782,48.0886,16.5913],["LPFR","10/28","",37.0173,-7.98609,37.0134,-7.95856],["LPMA","05/23","",32.689,-16.7848,32.7068,-16.764],["LPPD","12/30","",37.7462,-25.7109,37.7379,-25.6846],["LPPR","17/35","",41.2633,-8.68524,41.2325,-8.6772],["LPPT","02/20","",38.76568,-9.1443,38.79731,-9.12738],["LQBK","16/34","",44.9524,17.2946,44.9304,17.3004],["LQMO","15/33","",43.2929,17.8403,43.273,17.8514],["LQSA","11/29","",43.83,18.3171,43.8192,18.3459],["LQTZ","09/27","",44.4598,18.7093,44.4575,18.7403],["LRBC","16/34","",46.5327,26.9059,46.5111,26.9144],["LRBS","07/25","",44.4992,26.0828,44.5072,26.1215],["LRBV","03/21","",45.69602,25.51279,45.71648,25.53423],["LRCK","18/36","",44.3777,28.4906,44.3465,28.4863],["LRCL","07/25","",46.78515,23.67406,46.7902,23.69646],["LRCV","08/26","",44.3179,23.8729,44.3184,23.9041],["LRIA","14/32","",47.18947,27.6127,47.17101,27.62911],["LROD","01/19","",47.01734,21.90012,47.03327,21.90469],["LROP","08L/26R","",44.5765,26.0839,44.5798,26.1278],["LROP","08R/26L","",44.5645,26.0766,44.5678,26.1204],["LRSB","09/27","",45.78616,24.06867,45.78561,24.10249],["LRSV","16/34","",47.6952,26.3506,47.6798,26.3575],["LRTR","11/29","",45.8151,21.3168,45.8045,21.359],["LSGG","04/22","",46.2258,6.09092,46.2504,6.12699],["LSZH","10/28","",47.4589,8.53747,47.4566,8.57045],["LSZH","14/32","",47.4831,8.53473,47.4613,8.56446],["LSZH","16/34","",47.4756,8.53595,47.4454,8.55673],["LTAI","18C/36C","",36.9155,30.7947,36.8851,30.7906],["LTAI","18L/36R","",36.9114,30.8114,36.8809,30.8072],["LTAI","18R/36L","",36.9157,30.7924,36.889,30.7887],["LTBJ","16L/34R","",38.3066,27.1527,38.2782,27.1612],["LTBJ","16R/34L","",38.3062,27.1506,38.2778,27.1592],["LTFJ","06L/24R","",40.8927,29.2934,40.9044,29.325],["LTFJ","06R/24L","",40.88485,29.30259,40.89876,29.34038],["LTFM","09/27","",41.25369,28.76627,41.25406,28.80002],["LTFM","16L/34R","",41.2986,28.7092,41.2649,28.7099],["LTFM","16R/34L","",41.2986,28.70675,41.26484,28.70741],["LTFM","17L/35R","",41.29883,28.72704,41.26192,28.72776],["LTFM","17R/35L","",41.2988,28.7245,41.2619,28.7253],["LTFM","18/36","",41.2898,28.7562,41.2622,28.7567],["LUKK","08/26","",46.9273,28.9074,46.9283,28.9545],["LUKK","09/27","",46.9327,28.9202,46.93007,28.95126],["LWOH","01/19","",41.169,20.7377,41.1908,20.7469],["LWSK","16/34","",41.9723,21.6177,41.951,21.6251],["LXGB","09/27","",36.15083,-5.35962,36.15151,-5.34006],["LYBE","12L/30R","",44.82652,20.29097,44.81033,20.32745],["LYBE","12R/30L","",44.82499,20.28989,44.80832,20.32748],["LYNI","11/29","",43.3412,21.8413,43.3323,21.8695],["LYPG","18/36","",42.3706,19.253,42.3482,19.2507],["LZIB","04/22","",48.1608,17.1994,48.1796,17.2265],["LZIB","13/31","",48.1757,17.204,48.1558,17.2348],["ULLI","10L/28R","",59.8097,30.2454,59.8011,30.3035],["ULLI","10R/28L","",59.7999,30.2183,59.7904,30.2829],["ULMM","13/31","",68.791,32.7336,68.7724,32.768],["UMBB","11/29","",52.113,23.8788,52.1035,23.9137],["UMKK","06/24","",54.88546,20.57479,54.89779,20.62241],["UMMS","13L/31R","",53.9053,28.0333,53.8803,28.0704],["UMMS","13R/31L","",53.89476,28.01247,53.87017,28.04897],["URKK","05L/23R","",45.0291,39.1414,45.0411,39.1635],["URKK","05R/23L","",45.026,39.1734,45.0424,39.2036],["URMM","11/29","",44.2344,43.0613,44.2157,43.1025],["URSS","02/20","",43.4358,39.9458,43.4532,39.9591],["URSS","06/24","",43.4395,39.9259,43.4506,39.9585],["URWW","05/23","",48.77482,44.3185,48.78573,44.35284],["UUDD","13C/31C","",55.41694,37.91536,55.39937,37.93647],["UUDD","13R/31L","",55.42106,37.8721,55.39512,37.90335],["UUDL","05/23","",57.5546,40.1349,57.5667,40.1798],["UUEE","06C/24C","",55.9698,37.3867,55.978,37.4417],["UUEE","06L/24R","",55.981,37.3289,55.9884,37.3785],["UUEE","06R/24L","",55.9671,37.3863,55.9757,37.4437],["UUWW","01/19","",55.5866,37.2576,55.6118,37.2769],["UUWW","06/24","",55.5865,37.2387,55.598,37.2903],["UWGG","18L/36R","",56.2416,43.79,56.2195,43.7819],["UWGG","18R/36L","",56.242,43.7867,56.2173,43.7776],["UWPS","02/20","",54.11471,45.20108,54.13572,45.2243],["UWSG","08/26","",51.71313,46.14952,51.71213,46.1929],["UWUU","14R/32L","",54.57319,55.84935,54.54371,55.87774],["UWWW","05/23","",53.4984,50.1349,53.5094,50.1693],["UWWW","15/33","",53.5186,50.169,53.4932,50.1845]];
+// Grote luchthavens in Europa met hun banen (OurAirports, publiek domein).
+// Per baankop een plek 100 m voorbij de kop, op het verlengde van de middenlijn.
+function destPoint(lat, lon, brg, km){
+  const R = 6371, r = Math.PI/180, d = km/R, la1 = lat*r, lo1 = lon*r;
+  const la2 = Math.asin(Math.sin(la1)*Math.cos(d) + Math.cos(la1)*Math.sin(d)*Math.cos(brg));
+  const lo2 = lo1 + Math.atan2(Math.sin(brg)*Math.sin(d)*Math.cos(la1), Math.cos(d) - Math.sin(la1)*Math.sin(la2));
+  return [la2/r, lo2/r];
+}
+const SPOTS = [];
+for (const [ap, pair, rname, a1, o1, a2, o2] of RWYS){
+  const [e1, e2] = pair.split('/');
+  for (const [end, la, lo, ola, olo] of [[e1, a1, o1, a2, o2], [e2, a2, o2, a1, o1]]){
+    const b = bearing(ola, olo, la, lo);                       // van de andere kop naar deze: naar buiten
+    const [lat, lon] = destPoint(la, lo, b, 0.1);
+    const dir = ['n','ne','e','se','s','sw','w','nw'][Math.round(((b*180/Math.PI) + 360) % 360 / 45) % 8];
+    SPOTS.push({id: `${(rname || ap).toLowerCase()}-${end.toLowerCase()}`, ap, rw: pair, rname, end, dir, lat, lon,
+                get name(){ return spotName(this); }});
+  }
+}
+function spotName(sp){
+  const where = `${t('d_' + sp.dir)} (${t('end')} ${sp.end})`;
+  return sp.rname ? `${sp.rname} ${where}` : `${t('runway')} ${sp.rw} ${where}`;
+}
+const FEEDS = [
+  (lat,lon,nm)=>`https://api.adsb.lol/v2/point/${lat}/${lon}/${nm}`,
+  (lat,lon,nm)=>`https://api.airplanes.live/v2/point/${lat}/${lon}/${nm}`,
+];
+const DEFAULT_SPOT = SPOTS.find(s => s.id === 'polderbaan-18r') || SPOTS[0];
+const airportOf = icao => AIRPORTS.find(a => a[0] === icao);
+const POLL_MS = 2000;
+const LOOKAHEAD_S = 40;      // toestel al tonen als het binnen zoveel seconden boven je is
+const FETCH_NM = 8;          // straal voor de radar
+const MAX_ALT_FT = 7000;     // hoger dan dit telt niet als "over je heen"
+const HOME_ICAO = 'EHAM';
+
+/* ---------- State ---------- */
+let here = {...DEFAULT_SPOT};
+let radiusKm = 3;
+let timer = null;
+let feedIdx = 0;
+let current = null;          // hex van het vliegtuig dat nu boven je is
+let soundOn = false;
+let lastPlanes = [];
+const routeCache = new Map();
+const anthemCache = new Map();
+const history = [];
+
+/* ---------- DOM ---------- */
+const $ = id => document.getElementById(id);
+const spotSel = $('spot');
+const flagOf = iso => iso && iso.length===2 ? String.fromCodePoint(...[...iso.toUpperCase()].map(c=>127397+c.charCodeAt())) : '';
+spotSel.add(new Option(t('myLocation'), 'gps'));
+spotSel.add(new Option(t('enterOwn'), 'custom'));
+{ // luchthavens, per land
+  const byCountry = new Map();
+  AIRPORTS.forEach(a => { if (!byCountry.has(a[3])) byCountry.set(a[3], []); byCountry.get(a[3]).push(a); });
+  [...byCountry.entries()]
+    .map(([cc, list]) => [countryName(cc, cc), cc, list])
+    .sort((x, y) => x[0].localeCompare(y[0], LOCALE))
+    .forEach(([label, cc, list]) => {
+      const g = document.createElement('optgroup'); g.label = `${flagOf(cc)} ${label}`;
+      list.sort((x, y) => x[2].localeCompare(y[2], LOCALE)).forEach(a => g.append(new Option(`${a[2]} (${a[1]})`, 'ap:' + a[0])));
+      spotSel.append(g);
+    });
+}
+const runSel = $('runway');
+function fillRunways(icao){
+  runSel.innerHTML = '';
+  SPOTS.filter(s => s.ap === icao)
+    .sort((x, y) => x.rw.localeCompare(y.rw) || x.end.localeCompare(y.end))
+    .forEach(s => runSel.add(new Option(s.name, s.id)));
+  runSel.hidden = !runSel.options.length;
+}
+function applySpot(id){
+  const sp = SPOTS.find(s => s.id === id);
+  if (!sp) return;
+  const ap = airportOf(sp.ap);
+  here = {...sp, name: ap ? `${ap[2]} \u00b7 ${sp.name}` : sp.name}; showHere();
+  setRadius(1);                       // baankop: alleen wat echt over de kop komt
+  current = null; tick();
+}
+function selectSpot(id){              // beide keuzelijsten op een baankop zetten
+  const sp = SPOTS.find(s => s.id === id) || DEFAULT_SPOT;
+  spotSel.value = 'ap:' + sp.ap; fillRunways(sp.ap); runSel.value = sp.id;
+  $('customForm').hidden = true;
+  applySpot(sp.id);
+}
+
+spotSel.onchange = () => {
+  $('customForm').hidden = spotSel.value !== 'custom';
+  if (!spotSel.value.startsWith('ap:')) runSel.hidden = true;
+  if (spotSel.value === 'custom'){ $('customInput').focus(); return; }
+  if (spotSel.value === 'gps') return useGps();
+  const icao = spotSel.value.slice(3);
+  fillRunways(icao);
+  const first = icao === 'EHAM' ? DEFAULT_SPOT.id : runSel.options[0]?.value;
+  if (first){ runSel.value = first; applySpot(first); }
+};
+runSel.onchange = () => applySpot(runSel.value);
+$('gps').onclick = useGps;
+$('radius').oninput = e => setRadius(+e.target.value);
+function setRadius(km){
+  radiusKm = km; $('radius').value = km; $('radiusVal').textContent = `${Number(km).toLocaleString(LOCALE)} km`;
+}
+$('start').onclick = () => {
+  soundOn = !soundOn;
+  $('start').textContent = soundOn ? t('soundOff') : t('soundOn');
+  if (soundOn){
+    unlockAudio();
+    if (!lastLead) lastLead = boardLead();
+    if (lastLead) startCountry(lastLead); else setDiscStatus(t('waitingFirst'));
+  } else {
+    if (spotifyOpen) backToLive();
+    playReq++; decks.forEach(d => { d.target = 0; d.el.pause(); });
+    setDiscStatus('');
+  }
+  if (!timer) startPolling();
+  updateMix();
+};
+$('play').onclick = () => { $('play').hidden = true; decks[active].el.play().catch(() => {}); };
+
+
+/* ---------- Waar sta je? ---------- */
+const nf1 = new Intl.NumberFormat(LOCALE, {maximumFractionDigits:4, minimumFractionDigits:4});
+let herePlace = null;
+function placeLabel(){
+  const p = herePlace?.plaats, c = herePlace?.stad;
+  if (p && c && p !== c) return `${p}, ${c}`;
+  return p || c || 'Amsterdam';
+}
+async function showHere(){
+  const el = $('hereLine'), h = here;
+  const nearest = SPOTS.map(sp => ({sp, d:distKm(h.lat,h.lon,sp.lat,sp.lon)})).sort((a,b)=>a.d-b.d)[0];
+  const coords = `${nf1.format(h.lat)}, ${nf1.format(h.lon)}`;
+  const map = `https://www.openstreetmap.org/?mlat=${h.lat}&mlon=${h.lon}#map=15/${h.lat}/${h.lon}`;
+  const render = place => {
+    el.innerHTML = '';
+    const b = document.createElement('strong'); b.textContent = `\ud83d\udccd ${place}`;
+    const a = document.createElement('a'); a.href = map; a.target = '_blank'; a.rel = 'noopener'; a.textContent = t('map');
+    const extra = h.id === 'gps'
+      ? ` \u00b7 ${coords}${h.acc ? ` (\u00b1${Math.round(h.acc)} m)` : ''} \u00b7 ${t('kmFrom', {d: dec(nearest.d, 1), s: nearest.sp.name.split(' (')[0]})} \u00b7 `
+      : ` \u00b7 ${coords} \u00b7 `;
+    el.append(b, extra, a);
+  };
+  render(h.id === 'gps' ? t('myLocation') : h.name);
+  herePlace = null;
+  try {
+    const j = await getJSON(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=17&accept-language=${LANG}&lat=${h.lat.toFixed(4)}&lon=${h.lon.toFixed(4)}`);
+    if (here !== h) return;                       // inmiddels andere plek gekozen
+    const a = j.address || {};
+    // plaats (dorp/wijk) en stad of gemeente, voor de welkomstzin
+    herePlace = {plaats: a.village || a.town || a.hamlet || a.suburb || a.city || '', stad: a.city || a.municipality || a.town || ''};
+    if (h.id === 'gps'){
+      const place = [a.road, a.village || a.town || a.city || a.suburb || a.municipality].filter(Boolean).join(', ');
+      if (place) render(place);
+    }
+  } catch(e){ /* dan blijft de naam staan */ }
+}
+
+/* ---------- Zelf een locatie invoeren ---------- */
+function setCustom(lat, lon, name){
+  here = {id:'custom', name, lat, lon};
+  spotSel.value = 'custom'; runSel.hidden = true; current = null; setRadius(3);
+  try { localStorage.setItem('flyCustom', JSON.stringify(here)); } catch(e){}
+  showHere();
+  if (!timer) startPolling(); else tick();
+}
+$('customForm').onsubmit = async e => {
+  e.preventDefault();
+  const q = $('customInput').value.trim();
+  if (!q) return;
+  // co\u00f6rdinaten: "52.36, 4.71" of "52,36 4,71"
+  const m = q.match(/^\s*(-?\d{1,2}(?:[.,]\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:[.,]\d+)?)\s*$/);
+  if (m){
+    const lat = parseFloat(m[1].replace(',','.')), lon = parseFloat(m[2].replace(',','.'));
+    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) return setCustom(lat, lon, t('ownCoords'));
+  }
+  setStatus(t('searching', {q}));
+  try {
+    const r = await getJSON(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=${LANG}&q=${encodeURIComponent(q)}`);
+    if (!r.length) return setStatus(t('notFound', {q}), true);
+    setCustom(parseFloat(r[0].lat), parseFloat(r[0].lon), r[0].display_name.split(',').slice(0,2).join(',').trim());
+  } catch(err){ setStatus(t('searchFail'), true); }
+};
+
+function useGps(){
+  const fallback = msg => {
+    // geen GPS: terug naar de eerste vaste plek, zodat er toch iets te zien is
+    selectSpot(DEFAULT_SPOT.id);
+    setStatus(msg, true);
+    if (!timer) startPolling(); else tick();
+  };
+  if (!navigator.geolocation) return fallback(t('noGeo'));
+  spotSel.value = 'gps'; runSel.hidden = true;
+  setStatus(t('locating'));
+  navigator.geolocation.getCurrentPosition(p => {
+    here = {id:'gps', name:t('myLocation'), lat:p.coords.latitude, lon:p.coords.longitude, acc:p.coords.accuracy}; setRadius(3);
+    showHere();
+    spotSel.value = 'gps'; current = null;
+    if (!timer) startPolling(); else tick();
+  }, () => fallback(t('geoFail')),
+  {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
+}
+
+/* ---------- Helpers ---------- */
+function distKm(a1,o1,a2,o2){
+  const R=6371, r=Math.PI/180, dA=(a2-a1)*r, dO=(o2-o1)*r;
+  const h=Math.sin(dA/2)**2+Math.cos(a1*r)*Math.cos(a2*r)*Math.sin(dO/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function bearing(a1,o1,a2,o2){
+  const r=Math.PI/180, y=Math.sin((o2-o1)*r)*Math.cos(a2*r);
+  const x=Math.cos(a1*r)*Math.sin(a2*r)-Math.sin(a1*r)*Math.cos(a2*r)*Math.cos((o2-o1)*r);
+  return Math.atan2(y,x);
+}
+const altFt = p => p.alt_baro === 'ground' ? 0 : (p.alt_baro ?? p.alt_geom ?? null);
+function setStatus(msg, err=false){ const s=$('status'); s.textContent=msg; s.classList.toggle('error', err); }
+// Alles loopt via de eigen proxy naast dit bestand (die cachet en vangt haperingen op).
+let lastError = '';
+async function getJSON(url){
+  const host = new URL(url).host;
+  try {
+    const r = await fetch(`proxy.php?url=${encodeURIComponent(url)}`, {cache:'no-store'});
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  } catch(e){
+    lastError = `${host}: ${e.message}`;
+    throw e;
+  }
+}
+
+/* ---------- Data ---------- */
+function startPolling(){ tick(); timer = setInterval(tick, POLL_MS); }
+
+let busy = false, failCount = 0;
+async function tick(){
+  if (busy) return;            // vorige ronde nog bezig: niet opstapelen
+  busy = true;
+  try { await doTick(); } finally { busy = false; }
+}
+
+async function doTick(){
+  let data=null;
+  for (let i=0;i<FEEDS.length && !data;i++){
+    const idx=(feedIdx+i)%FEEDS.length;
+    try { data = await getJSON(FEEDS[idx](here.lat.toFixed(4), here.lon.toFixed(4), FETCH_NM)); feedIdx=idx; }
+    catch(e){ /* volgende bron proberen */ }
+  }
+  if (!data) {
+    failCount++;
+    render();
+    // E\u00e9n of twee missers zijn normaal; pas na drie op rij rood tonen.
+    if (failCount < 3) return setStatus(t('retrying', {e: lastError}));
+    return setStatus(t('feedDown', {n: failCount, e: lastError}), true);
+  }
+  failCount = 0;
+
+  // leeftijd van de data (incl. cache van de proxy), begrensd tegen klokverschillen
+  const feedAge = data.now ? Math.min(Math.max((Date.now()-data.now)/1000, 0), 10) : 0;
+  lastPlanes = (data.ac||[]).filter(p=>p.lat!=null && p.lon!=null).map(p=>({
+    ...p,
+    callsign:(p.flight||'').trim(),
+    d:distKm(here.lat,here.lon,p.lat,p.lon),
+    b:bearing(here.lat,here.lon,p.lat,p.lon),
+    alt:altFt(p),
+    t0:performance.now() - (feedAge + (p.seen_pos||0))*1000
+  }));
+  setStatus(t(lastPlanes.length === 1 ? 'statusLine1' : 'statusLine', {n: lastPlanes.length, km: Math.round(FETCH_NM*1.852), t: new Date().toLocaleTimeString(LOCALE)}));
+  prefetchRoutes();
+  evaluateOverhead();
+  render();
+}
+
+/* ---------- Welk toestel is "boven je"? ----------
+   Elke 250 ms, op basis van de doorgerekende positie (niet de laatste meting).
+   We kijken vooruit: waar komt elk toestel het dichtst bij je (CPA), en wanneer?
+   Komt dat binnen je straal en binnen LOOKAHEAD_S seconden, dan staat het al op het bord. */
+function liveState(p, now){
+  const pos = predicted(p, now);
+  const v = (p.gs||0)*1.852/3600;                    // km/s
+  const vx = Math.sin(pos.hdg)*v, vy = Math.cos(pos.hdg)*v;
+  const d = Math.hypot(pos.x, pos.y);
+  const vv = vx*vx + vy*vy;
+  const tcpa = vv > 0 ? -(pos.x*vx + pos.y*vy)/vv : 0;   // s tot dichtstbijzijnde punt
+  const dcpa = vv > 0 ? Math.hypot(pos.x + vx*tcpa, pos.y + vy*tcpa) : d;
+  return {d, tcpa, dcpa};
+}
+
+let shownHex = null;
+function evaluateOverhead(){
+  const now = performance.now();
+  const cands = [];
+  for (const p of lastPlanes){
+    if (!(p.alt>0 && p.alt<MAX_ALT_FT)) continue;
+    const st = liveState(p, now);
+    const inside = st.d <= radiusKm;
+    // seconden tot het toestel de straal binnenkomt (0 = er al in)
+    const v = (p.gs||1)*1.852/3600;
+    const enter = inside ? 0 : Math.max(st.tcpa - Math.sqrt(Math.max(radiusKm**2 - st.dcpa**2, 0))/v, 0);
+    const coming = st.dcpa <= radiusKm && st.tcpa > 0 && enter < LOOKAHEAD_S;
+    if (!inside && !coming) continue;
+    cands.push({p, st, inside, enter, score: enter + st.d*0.01});
+  }
+  cands.sort((a,b)=>a.score-b.score);
+
+  // huidige toestel vasthouden zolang het nog binnen de straal is (geen geflipper)
+  // Huidig toestel vasthouden zolang het nog meedoet; alleen wisselen als het
+  // andere toestel minstens 8 s eerder boven je is (anders flipperen ze heen en weer).
+  const cur = cands.find(c=>c.p.hex===current), best = cands[0] || null;
+  let pick = cur && (cur.inside || !best || best.enter > cur.enter - 8) ? cur : best;
+
+  if (!pick){ if (current){ current=null; shownHex=null; showIdle(); } return; }
+  const p = pick.p;
+  current = p.hex;
+  showPlane(p, pick);
+  if (shownHex !== p.hex){
+    shownHex = p.hex;
+    const hit = routeCache.get(p.callsign);
+    if (hit !== undefined){ onNewPlane(p, hit); }
+    else { $('route').textContent = t('lookingRoute'); $('flag').textContent='';
+           getRoute(p.callsign).then(r => { if (current===p.hex) onNewPlane(p, r); }); }
+  }
+}
+
+/* ---------- Land: regeringsleider (Wikidata) + democratie-index (EIU via Our World in Data) ---------- */
+// Democratie-index uit Wikidata: het item "Democracy Index" (Q326174) wijst via
+// "Wikidata property" (P1687) naar de eigenschap met de EIU-score per land.
+// Zo hoeven we het eigenschapsnummer niet hard te coderen.
+const countryCache = new Map();
+const demoCache = new Map();
+let demoError = '';
+
+async function democracyScore(iso){
+  if (!/^[A-Z]{2}$/.test(iso)) return null;
+  if (demoCache.has(iso)) return demoCache.get(iso);
+  const q = `SELECT ?score ?time WHERE {
+    ?country wdt:P297 "${iso}" .
+    FILTER NOT EXISTS { ?country wdt:P576 ?end }
+    wd:Q326174 wdt:P1687 ?prop .
+    ?prop wikibase:claim ?pc ; wikibase:statementProperty ?ps .
+    ?country ?pc ?st . ?st ?ps ?score .
+    OPTIONAL { ?st pq:P585 ?time }
+  } ORDER BY DESC(?time) LIMIT 1`;
+  try {
+    const rows = (await getJSON('https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(q))).results.bindings;
+    demoError = '';
+    const r = rows[0];
+    const v = r ? parseFloat(r.score.value) : NaN;
+    const res = isNaN(v) ? null : {score: v <= 10 ? v*10 : v, year: r.time ? r.time.value.slice(0,4) : ''};
+    demoCache.set(iso, res);
+    return res;
+  } catch(e){ demoError = `Fout: ${e.message}`; return undefined; }   // undefined = laden mislukt
+}
+
+async function countryInfo(iso){
+  iso = (iso||'').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(iso)) return null;
+  if (countryCache.has(iso)) return countryCache.get(iso);
+  const q = `SELECT ?iso3 ?countryLabel ?hog ?hogLabel ?hogImg ?hos ?hosLabel ?hosImg WHERE {
+    ?country wdt:P297 "${iso}" .
+    FILTER NOT EXISTS { ?country wdt:P576 ?end }
+    OPTIONAL { ?country wdt:P298 ?iso3 }
+    OPTIONAL { ?country wdt:P6 ?hog . OPTIONAL { ?hog wdt:P18 ?hogImg } }
+    OPTIONAL { ?country wdt:P35 ?hos . OPTIONAL { ?hos wdt:P18 ?hosImg } }
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "${LANG},en". }
+  } LIMIT 10`;
+  let rows;
+  try { rows = (await getJSON('https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(q))).results.bindings; }
+  catch(e){ return null; }                       // niet cachen: later opnieuw
+  if (!rows.length){ countryCache.set(iso, null); return null; }
+  const v = (r,k) => r?.[k]?.value;
+  // voorkeur: regeringsleider (premier); geen foto? dan staatshoofd
+  let leader = null;
+  const hog = rows.find(r=>r.hogImg) || rows.find(r=>r.hog);
+  if (hog) leader = {name:v(hog,'hogLabel'), img:v(hog,'hogImg'), role:t('headGov')};
+  if (!leader?.img){ const hos = rows.find(r=>r.hosImg); if (hos) leader = {name:v(hos,'hosLabel'), img:v(hos,'hosImg'), role:t('headState')}; }
+  const info = {iso3:v(rows[0],'iso3'), name:v(rows[0],'countryLabel'), leader};
+  countryCache.set(iso, info);
+  return info;
+}
+
+const DEMO_CATS = [[80,t('demo_full')],[60,t('demo_flawed')],[40,t('demo_hybrid')],[0,t('demo_auth')]];
+
+/* ---------- Landenfeiten (Wikidata) + Big Mac-index (The Economist) ---------- */
+const factsCache = new Map();
+let bigMacPromise = null;
+const BIGMAC_URL = 'https://raw.githubusercontent.com/TheEconomist/big-mac-data/master/output-data/big-mac-full-index.csv';
+const USD = 'http://www.wikidata.org/entity/Q4917', KM2 = 'http://www.wikidata.org/entity/Q712226';
+
+async function getText(url){
+  const r = await fetch(`proxy.php?url=${encodeURIComponent(url)}`, {cache:'no-store'});
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.text();
+}
+function parseCSVLine(l){
+  const out=[]; let cur='', q=false;
+  for (let i=0;i<l.length;i++){
+    const ch=l[i];
+    if (q){ if (ch==='"'){ if (l[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else if (ch==='"') q=true; else if (ch===','){ out.push(cur); cur=''; } else cur+=ch;
+  }
+  out.push(cur); return out;
+}
+function loadBigMac(){
+  if (!bigMacPromise) bigMacPromise = getText(BIGMAC_URL).then(txt => {
+    const lines = txt.trim().split(/\r?\n/), h = parseCSVLine(lines[0]);
+    const ix = n => h.indexOf(n);
+    const iD=ix('date'), iIso=ix('iso_a3'), iP=ix('dollar_price'), iR=ix('USD_raw');
+    const map = new Map();
+    for (const l of lines.slice(1)){
+      const c = parseCSVLine(l), iso = c[iIso], price = parseFloat(c[iP]);
+      if (!iso || isNaN(price)) continue;
+      const prev = map.get(iso);
+      if (!prev || c[iD] > prev.date) map.set(iso, {date:c[iD], price, raw:parseFloat(c[iR])});
+    }
+    return map;
+  }).catch(() => { bigMacPromise = null; return null; });
+  return bigMacPromise;
+}
+
+async function countryFacts(iso){
+  if (!/^[A-Z]{2}$/.test(iso)) return null;
+  if (factsCache.has(iso)) return factsCache.get(iso);
+  const q = `SELECT ?k ?v ?vLabel ?t ?rank ?unit ?code WHERE {
+    ?country wdt:P297 "${iso}" .
+    FILTER NOT EXISTS { ?country wdt:P576 ?e }
+    VALUES (?k ?p ?ps ?psv) {
+      ("pop" p:P1082 ps:P1082 psv:P1082) ("gdp" p:P2131 ps:P2131 psv:P2131)
+      ("gdppc" p:P2132 ps:P2132 psv:P2132) ("area" p:P2046 ps:P2046 psv:P2046)
+      ("inc" p:P571 ps:P571 psv:P571) ("cap" p:P36 ps:P36 psv:P36) ("cur" p:P38 ps:P38 psv:P38)
+    }
+    ?country ?p ?st . ?st ?ps ?v ; wikibase:rank ?rank .
+    FILTER(?rank != wikibase:DeprecatedRank)
+    FILTER NOT EXISTS { ?st pq:P582 ?end }
+    OPTIONAL { ?st pq:P585 ?t }
+    OPTIONAL { ?st ?psv ?node . ?node wikibase:quantityUnit ?unit }
+    OPTIONAL { ?v wdt:P498 ?code }
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "${LANG},en". }
+  }`;
+  let rows;
+  try { rows = (await getJSON('https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(q))).results.bindings; }
+  catch(e){ return null; }
+  const val = (r,k) => r?.[k]?.value;
+  const of = k => rows.filter(r => val(r,'k') === k);
+  const pref = arr => { const p = arr.filter(r => val(r,'rank').endsWith('PreferredRank')); return p.length ? p : arr; };
+  const latest = arr => arr.slice().sort((a,b) => (val(b,'t')||'').localeCompare(val(a,'t')||''))[0];
+  const num = r => r ? {n:parseFloat(val(r,'v')), year:(val(r,'t')||'').slice(0,4)} : null;
+
+  const incR = pref(of('inc')).slice().sort((a,b) => parseInt(val(a,'v')) - parseInt(val(b,'v')))[0];
+  const f = {
+    pop:   num(latest(pref(of('pop')))),
+    gdp:   num(latest(of('gdp').filter(r => val(r,'unit') === USD))),
+    gdppc: num(latest(of('gdppc').filter(r => val(r,'unit') === USD))),
+    area:  num(of('area').find(r => val(r,'unit') === KM2)),
+    inc:   incR ? parseInt(val(incR,'v')) : null,
+    cap:   val(pref(of('cap'))[0], 'vLabel'),
+    cur:   [...new Set(pref(of('cur')).map(r => val(r,'code')).filter(Boolean))],
+  };
+  factsCache.set(iso, f);
+  return f;
+}
+
+const fmtBig = n => new Intl.NumberFormat(LOCALE, {notation:'compact', maximumFractionDigits:1}).format(n);
+const fmtInt = n => new Intl.NumberFormat(LOCALE, {maximumFractionDigits:0}).format(n);
+/* ---------- Wisselkoersen (Frankfurter) ---------- */
+let fxPromise = null;
+function parseRates(j){
+  // v2-formaat is tolerant gelezen: kaart {EUR:..} of lijst [{quote, rate}]
+  const out = {};
+  const list = Array.isArray(j) ? j : Array.isArray(j?.rates) ? j.rates : null;
+  if (list) list.forEach(r => { const q = r.quote || r.currency || r.code; if (q && r.rate != null) out[String(q).toUpperCase()] = +r.rate; });
+  else if (j?.rates && typeof j.rates === 'object') Object.entries(j.rates).forEach(([k,v]) => out[k.toUpperCase()] = +v);
+  return out;
+}
+function loadRates(){       // koersen t.o.v. 1 euro
+  if (!fxPromise) fxPromise = (async () => {
+    let rates = {};
+    try { rates = parseRates(await getJSON('https://api.frankfurter.dev/v2/rates?base=EUR')); } catch(e){}
+    if (!Object.keys(rates).length){
+      try { rates = parseRates(await getJSON('https://api.frankfurter.dev/v1/latest?base=EUR')); } catch(e){}
+    }
+    rates.EUR = 1;
+    if (Object.keys(rates).length < 2){ fxPromise = null; return null; }
+    return rates;
+  })();
+  return fxPromise;
+}
+
+/* ---------- Wereldbank-indicatoren ---------- */
+const WB = {pop:'SP.POP.TOTL', gdp:'NY.GDP.MKTP.CD', gdppc:'NY.GDP.PCAP.CD', life:'SP.DYN.LE00.IN', net:'IT.NET.USER.ZS'};
+const wbCache = new Map();
+async function worldBank(iso3){
+  if (!iso3) return null;
+  if (wbCache.has(iso3)) return wbCache.get(iso3);
+  const out = {};
+  await Promise.all(Object.entries(WB).map(async ([k, ind]) => {
+    try {
+      const j = await getJSON(`https://api.worldbank.org/v2/country/${iso3}/indicator/${ind}?format=json&mrnev=1`);
+      const r = Array.isArray(j) && Array.isArray(j[1]) ? j[1].find(x => x.value != null) : null;
+      if (r) out[k] = {n: +r.value, year: String(r.date)};
+    } catch(e){}
+  }));
+  const res = Object.keys(out).length ? out : null;
+  wbCache.set(iso3, res);
+  return res;
+}
+
+function renderFacts(f, bm, wb, fx){
+  const dl = $('cFacts'); dl.innerHTML = '';
+  const add = (label, value, note) => {
+    if (value == null || value === '') return;
+    const dt = document.createElement('dt'); dt.textContent = label;
+    const dd = document.createElement('dd'); dd.textContent = value;
+    if (note){ const sm = document.createElement('small'); sm.textContent = ` ${note}`; dd.append(sm); }
+    const wrap = document.createElement('div'); wrap.append(dt, dd); dl.append(wrap);
+  };
+  // Wereldbank-cijfers gaan voor; Wikidata is de reserve
+  const pop = wb?.pop || f?.pop, gdp = wb?.gdp || f?.gdp, gdppc = wb?.gdppc || f?.gdppc;
+  const EUR = '\u20ac';
+  const eur = usd => fx?.USD ? usd / fx.USD : null;       // 1 EUR = fx.USD dollar
+  const money = usd => { const e = eur(usd); return e != null ? `${EUR} ${fmtBig(e)}` : `$ ${fmtBig(usd)}`; };
+  const moneyInt = usd => { const e = eur(usd); return e != null ? `${EUR} ${fmtInt(e)}` : `$ ${fmtInt(usd)}`; };
+  if (f || wb){
+    add(t('capital'), f?.cap);
+    add(t('population'), pop && fmtBig(pop.n), pop?.year);
+    add(t('founded'), f?.inc != null ? (f.inc < 0 ? t('bc', {y: -f.inc}) : String(f.inc)) : null);
+    add(t('area'), f?.area && `${fmtInt(f.area.n)} km\u00b2`);
+    add(t('gdp'), gdp && money(gdp.n), gdp?.year);
+    add(t('gdppc'), gdppc && moneyInt(gdppc.n), gdppc?.year);
+    add(t('life'), wb?.life && t('years', {n: Math.round(wb.life.n)}), wb?.life?.year);
+    add(t('online'), wb?.net && `${Math.round(wb.net.n)}%`, wb?.net ? t('ofPop', {y: wb.net.year}) : '');
+    const cur = (f?.cur || []).filter(c => c !== 'EUR');
+    add(t('currency'), (f?.cur || []).join(', '));
+    if (fx && cur.length && fx[cur[0]]){
+      const r = fx[cur[0]];
+      add(t('fx'), `${EUR} 1 = ${r >= 100 ? fmtInt(r) : dec(r, r >= 10 ? 1 : 2)} ${cur[0]}`, t('today'));
+    }
+  }
+  if (bm){
+    const d = bm.date ? new Date(bm.date).toLocaleDateString(LOCALE, {month:'short', year:'numeric'}) : '';
+    const be = eur(bm.price), nl = fx?.USD && window._bmNL ? window._bmNL / fx.USD : null;
+    add(t('bigmac'), be != null ? `${EUR} ${dec(be, 2)}` : `$ ${dec(bm.price, 2)}`,
+        nl != null ? t(be > nl ? 'pricier' : 'cheaper', {p: `${EUR} ${dec(nl, 2)}`, d}) : d);
+    if (!isNaN(bm.raw)) add(t('bmIndex'), Math.abs(bm.raw) < 0.005 ? t('bmRef')
+      : t(bm.raw < 0 ? 'under' : 'over', {n: Math.round(Math.abs(bm.raw)*100)}), t('vsDollar'));
+    if (gdppc) add(t('bmPer'), fmtInt(gdppc.n / bm.price), t('bmPerNote'));
+  }
+  dl.hidden = !dl.children.length;
+}
+
+
+/* ---------- Tabbladen op de landkaart: Land / Muziek / Kunst / Auto's ---------- */
+const TABS = ['land', 'muziek'];
+let activeTab = 'land', tabISO = null, tabInfo = null;
+try { const t = localStorage.getItem('flyTab'); if (TABS.includes(t)) activeTab = t; } catch(e){}
+const tabCache = new Map();          // `${tab}:${ISO}` -> Promise<data>
+
+function selectTab(tab){
+  activeTab = tab;
+  try { localStorage.setItem('flyTab', tab); } catch(e){}
+  document.querySelectorAll('.tabs [data-tab]').forEach(b => {
+    const on = b.dataset.tab === tab;
+    b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+  });
+  TABS.forEach(t => { $('p-' + t).hidden = t !== tab; });
+  if (tab !== 'land' && tabISO) loadTab(tab, tabISO, tabInfo);
+}
+function initTabs(){
+  const bar = document.querySelector('.tabs');
+  bar.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) selectTab(b.dataset.tab); });
+  bar.addEventListener('keydown', e => {
+    if (!['ArrowLeft','ArrowRight'].includes(e.key)) return;
+    const i = TABS.indexOf(activeTab), n = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+    selectTab(n); bar.querySelector(`[data-tab="${n}"]`).focus();
+  });
+  selectTab(activeTab);
+}
+// aangeroepen vanuit showCountry
+function setTabCountry(ISO, info){
+  if (tabISO === ISO) return;
+  tabISO = ISO; tabInfo = info;
+  ['muziek'].forEach(t => { $('p-' + t).innerHTML = ''; $('p-' + t).dataset.iso = ''; });
+  if (activeTab !== 'land') loadTab(activeTab, ISO, info);
+}
+
+const LOADERS = {muziek: loadMusic};
+const RENDER  = {muziek: renderMusic};
+async function loadTab(tab, ISO, info){
+  const panel = $('p-' + tab);
+  if (panel.dataset.iso === ISO) return;                 // staat er al
+  panel.dataset.iso = ISO;
+  panel.innerHTML = ''; panel.append(el('p', 'pnote', t('loading')));
+  const key = `${tab}:${ISO}`;
+  if (!tabCache.has(key)) tabCache.set(key, LOADERS[tab](ISO, info).catch(() => null));
+  const data = await tabCache.get(key);
+  if (tabISO !== ISO || panel.dataset.iso !== ISO) return;
+  if (!data) tabCache.delete(key);                       // bij een fout later opnieuw proberen
+  panel.innerHTML = '';
+  RENDER[tab](panel, data, info);
+}
+
+/* --- kleine DOM-helpers --- */
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function thumbBox(url, name, cls){
+  const box = el('div', cls || 'pthumb');
+  if (url){ const i = el('img'); i.src = url; i.alt = ''; i.loading = 'lazy'; i.onerror = () => { i.remove(); box.textContent = (name || '?').trim().charAt(0); }; box.append(i); }
+  else box.textContent = (name || '?').trim().charAt(0);
+  return box;
+}
+function commonsThumb(url, w){ if (!url) return null; url = url.replace(/^http:/, 'https:'); return url + (url.includes('?') ? '&' : '?') + 'width=' + w; }
+function srcLine(panel, text){ panel.append(el('p', 'psrc', text)); }
+function emptyLine(panel, text){ panel.append(el('p', 'pnote', text)); }
+const yearOf = v => v ? String(parseInt(String(v).replace(/^\+/, ''), 10)) : '';
+
+async function sparql(q){
+  const j = await getJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(q));
+  return j.results.bindings;
+}
+const val = (r, k) => r?.[k]?.value;
+function uniqBy(rows, k){ const seen = new Set(); return rows.filter(r => { const id = val(r, k); if (seen.has(id)) return false; seen.add(id); return true; }); }
+const COUNTRY = iso => `?c wdt:P297 "${iso}" . FILTER NOT EXISTS { ?c wdt:P576 ?gone }`;
+
+/* --- Muziek: hitlijst van nu (Apple Music) + bekende bands (Wikidata) --- */
+async function loadMusic(ISO){
+  const chart = getJSON(`https://rss.marketingtools.apple.com/api/v2/${ISO.toLowerCase()}/music/most-played/5/songs.json`)
+    .then(j => j?.feed?.results || null).catch(() => null);
+  const bands = sparql(`SELECT ?b ?bLabel ?img ?start ?sl WHERE {
+    ${COUNTRY(ISO)}
+    { ?b wdt:P31 wd:Q215380 } UNION { ?b wdt:P31 ?t . ?t wdt:P279 wd:Q215380 }
+    ?b wdt:P495 ?c ; wikibase:sitelinks ?sl .
+    OPTIONAL { ?b wdt:P18 ?img } OPTIONAL { ?b wdt:P571 ?start }
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "${LANG},en". }
+  } ORDER BY DESC(?sl) LIMIT 20`).then(r => uniqBy(r, 'b').slice(0, 6)).catch(() => null);
+  const [c, b] = await Promise.all([chart, bands]);
+  return (c || b) ? {chart: c, bands: b} : null;
+}
+function renderMusic(panel, d, info){
+  const land = info?.name || t('thisCountry');
+  if (!d){ emptyLine(panel, t('musicFail')); return; }
+  if (d.chart?.length){
+    const [one, ...rest] = d.chart;
+    panel.append(el('h3', 'ph', t('nowNo1', {c: land})));
+    const top = el('a', 'np1'); top.href = one.url; top.target = '_blank'; top.rel = 'noopener';
+    if (one.artworkUrl100){ const im = el('img'); im.src = one.artworkUrl100.replace('100x100', '200x200'); im.alt = ''; im.loading = 'lazy'; im.onerror = () => im.remove(); top.append(im); }
+    const tx = el('span'); tx.append(el('strong', null, one.name), el('span', null, one.artistName)); top.append(tx);
+    panel.append(top);
+    if (rest.length){
+      const ol = el('ol', 'plist'); ol.start = 2;
+      rest.forEach(s => { const li = el('li'); li.append(el('strong', null, s.name), document.createTextNode(` \u00b7 ${s.artistName}`)); ol.append(li); });
+      panel.append(ol);
+    }
+    srcLine(panel, t('chartSrc'));
+  } else emptyLine(panel, t('noChart', {c: land}));
+
+  if (d.bands?.length){
+    panel.append(el('h3', 'ph', t('bandsFrom', {c: land})));
+    const g = el('div', 'pgrid');
+    d.bands.forEach(r => {
+      const item = el('div', 'pitem');
+      item.append(thumbBox(commonsThumb(val(r, 'img'), 200), val(r, 'bLabel')), el('strong', null, val(r, 'bLabel')));
+      if (val(r, 'start')) item.append(el('small', null, t('since', {y: yearOf(val(r, 'start'))})));
+      g.append(item);
+    });
+    panel.append(g);
+    srcLine(panel, t('bandsSrc'));
+  }
+}
+
+async function showCountry(tgt, hex){
+  const box = $('country');
+  if (!tgt?.iso){ box.hidden = true; return; }
+  const ISO = (tgt.iso||'').toUpperCase();
+  const [info, d, f, bmMap, fx] = await Promise.all([countryInfo(tgt.iso), democracyScore(ISO), countryFacts(ISO), loadBigMac(), loadRates()]);
+  const wb = await worldBank(info?.iso3);
+  if (current !== hex) return;                   // inmiddels ander toestel
+  if (!info){ box.hidden = true; return; }
+  setTabCountry(ISO, info);
+
+  const L = info.leader;
+  if (L?.img){
+    const src = L.img.replace(/^http:/,'https:');
+    $('cImg').src = src + (src.includes('?') ? '&' : '?') + 'width=240';
+    $('cImg').alt = t('portraitOf', {n: L.name});
+    $('cLink').href = src.replace('Special:FilePath/','File:');
+    $('cLink').hidden = false;
+  } else $('cLink').hidden = true;
+  $('cRole').textContent = L ? t('roleOf', {r: L.role, c: info.name}) : info.name;
+  $('cName').textContent = L ? L.name : '';
+
+  $('cDemo').hidden = false;
+  if (d){
+    const sc = Math.round(d.score);
+    $('cScore').textContent = `${sc}/100`;
+    $('cBar').style.width = `${sc}%`;
+    $('cCat').textContent = DEMO_CATS.find(([min])=>sc>=min)[1];
+    $('cSrc').textContent = t('demoSrc', {y: d.year ? ' ' + d.year : ''});
+  } else {
+    $('cScore').textContent = '';
+    $('cBar').style.width = '0';
+    $('cCat').textContent = d === null ? t('demoNone') : t('demoFail');
+    $('cSrc').textContent = d === null ? '' : demoError;
+  }
+  // Big Mac: eigen land, of de eurozone als het land de euro heeft
+  const bm = bmMap ? (bmMap.get(info.iso3) || (f?.cur.includes('EUR') ? bmMap.get('EUZ') : null)) : null;
+  if (bmMap) window._bmNL = (bmMap.get('EUZ') || {}).price;   // eurozone = 'hier'
+  renderFacts(f, bm, wb, fx);
+  box.hidden = false;
+}
+
+function onNewPlane(p, route){
+  showRoute(p, route);
+  showCountry(anthemTarget(route), p.hex);
+  addHistory(p, route);
+}
+setInterval(() => { evaluateOverhead(); updateMix(); }, 250);
+
+/* Routes (en volksliederen) alvast ophalen voor alles wat laag in de buurt vliegt */
+function prefetchRoutes(){
+  const todo = lastPlanes
+    .filter(p=>p.callsign && p.alt>0 && p.alt<MAX_ALT_FT && p.d<12 && !routeCache.has(p.callsign))
+    .sort((a,b)=>a.d-b.d).slice(0,4);
+  todo.forEach(p => getRoute(p.callsign).then(r => {
+    const t = anthemTarget(r); if (t){ countryInfo(t.iso); democracyScore((t.iso||'').toUpperCase()); countryFacts((t.iso||'').toUpperCase()); countryInfo(t.iso).then(i => worldBank(i?.iso3)); if (soundOn && t.iso) prefetch(t.iso.toUpperCase()); }
+  }));
+}
+
+async function adsbdbRoute(cs){
+  const j = await getJSON(`https://api.adsbdb.com/v0/callsign/${encodeURIComponent(cs)}`);
+  return j?.response?.flightroute || null;
+}
+// Reserve: hexdb.io kent routes die adsbdb mist; luchthavens daarna los opvragen
+const airportCache = new Map();
+async function hexdbAirport(icao){
+  if (!airportCache.has(icao)) airportCache.set(icao, getJSON(`https://hexdb.io/api/v1/airport/icao/${icao}`).catch(() => null));
+  const a = await airportCache.get(icao);
+  if (!a?.icao) return null;
+  const city = (a.airport || icao).replace(/\b(International|Intl\.?|Regional)\b|\bAirport\b|\bAirfield\b/gi, '').replace(/\s{2,}/g, ' ').trim();
+  return {icao_code: a.icao, iata_code: a.iata, country_iso_name: a.country_code, country_name: a.region_name,
+          municipality: city || a.icao, name: a.airport, latitude: a.latitude, longitude: a.longitude};
+}
+async function hexdbRoute(cs){
+  const j = await getJSON(`https://hexdb.io/api/v1/route/icao/${encodeURIComponent(cs)}`);
+  const m = /^([A-Z0-9]{4})-(?:.*-)?([A-Z0-9]{4})$/.exec(j?.route || '');   // "MMMX-EHAM" (of met tussenstop)
+  if (!m) return null;
+  const [origin, destination] = await Promise.all([hexdbAirport(m[1]), hexdbAirport(m[2])]);
+  return origin && destination ? {origin, destination, source: 'hexdb'} : null;
+}
+async function getRoute(cs){
+  if (!cs) return null;
+  if (routeCache.has(cs)) return routeCache.get(cs);
+  // AMX025 heet bij sommige bronnen AMX25: probeer ook zonder voorloopnullen
+  const variants = [cs];
+  const z = /^([A-Z]{3})0+(\d+[A-Z]*)$/.exec(cs);
+  if (z) variants.push(z[1] + z[2]);
+  let route = null, failed = false;
+  for (const v of variants){
+    try { route = await adsbdbRoute(v); } catch(e){ failed = true; }
+    if (route) break;
+  }
+  if (!route){
+    for (const v of variants){
+      try { route = await hexdbRoute(v); } catch(e){}
+      if (route) break;
+    }
+  }
+  if (!route && failed) return null;   // bron haperde: niet onthouden, later opnieuw proberen
+  routeCache.set(cs, route);
+  return route;
+}
+
+/* "Bestemming" voor het volkslied: vertrekkers \u2192 bestemming, landers op Schiphol \u2192 herkomst */
+function anthemTarget(route){
+  if (!route) return null;
+  const o=route.origin, d=route.destination;
+  const landsHere = d && (d.icao_code === HOME_ICAO && here.id !== 'custom' ||
+    (d.latitude != null && distKm(here.lat, here.lon, d.latitude, d.longitude) < 60));
+  if (landsHere && o) return {country:o.country_name, iso:o.country_iso_name, why:'komt uit'};
+  if (d) return {country:d.country_name, iso:d.country_iso_name, why:'gaat naar'};
+  return null;
+}
+
+function showIdle(){
+  showGreeting(null);
+  const c=$('callsign'); c.textContent=t('nothingOver'); c.classList.add('idle');
+  $('flag').textContent=''; $('route').textContent=t('waitingNext');
+  $('facts').hidden=true;
+  $('country').hidden=true;
+}
+
+function showPlane(p, pick){
+  const c=$('callsign'); c.textContent=p.callsign||p.r||p.hex.toUpperCase(); c.classList.remove('idle');
+  $('facts').hidden=false;
+  const st = pick.st;
+  $('fEta').textContent = pick.inside
+    ? (st.tcpa > 2 ? t('nowClosest', {s: Math.round(st.tcpa)}) : t('now'))
+    : t('inSec', {s: Math.max(1, Math.round(pick.enter))});
+  $('fAlt').textContent = `${Math.round(p.alt*0.3048).toLocaleString(LOCALE)} m`;
+  $('fDist').textContent = `${dec(st.d, 1)} km`;
+  $('fSpd').textContent = p.gs ? `${Math.round(p.gs*1.852)} ${t('kmh')}` : '\u2013';
+  $('fType').textContent = [p.t, p.r].filter(Boolean).join(' \u00b7 ') || '\u2013';
+}
+/* ---------- Groet in de taal van het land ----------
+   Vertrek: "Doei allemaal, goede vlucht!" in de taal van de bestemming.
+   Aankomst op Schiphol: welkomstzin in de taal van het vertrekland.
+   Per taal: [groot woord, rest]. Begint de rest met '|', dan is het een hele zin
+   (andere woordvolgorde) en wordt alleen die voorgelezen. */
+const GREET = {
+  nl:{v:'nl-NL', dep:['Doei','allemaal, goede vlucht!'], arr:['Welkom','in {p}! Welkom in Nederland, het land van bitterballen, kaas en oranje!']},
+  en:{v:'en-GB', dep:['Bye','everyone, have a good flight!'], arr:['Welcome','to {p}! Welcome to the Netherlands, the land of bitterballen, cheese and orange!']},
+  de:{v:'de-DE', dep:['Tsch\u00fcss','zusammen, guten Flug!'], arr:['Willkommen','in {p}! Willkommen in den Niederlanden, dem Land von Bitterballen, K\u00e4se und Orange!']},
+  fr:{v:'fr-FR', dep:['Salut','tout le monde, bon vol !'], arr:['Bienvenue','\u00e0 {p} ! Bienvenue aux Pays-Bas, le pays des bitterballen, du fromage et de l\u2019orange !']},
+  es:{v:'es-ES', dep:['\u00a1Adi\u00f3s!','\u00a1Buen vuelo a todos!'], arr:['\u00a1Bienvenidos!','|\u00a1Bienvenidos a {p}! \u00a1Bienvenidos a los Pa\u00edses Bajos, el pa\u00eds de los bitterballen, el queso y el naranja!']},
+  it:{v:'it-IT', dep:['Ciao','a tutti, buon volo!'], arr:['Benvenuti','a {p}! Benvenuti nei Paesi Bassi, il paese dei bitterballen, del formaggio e dell\u2019arancione!']},
+  pt:{v:'pt-PT', dep:['Tchau','a todos, boa viagem!'], arr:['Bem-vindos','a {p}! Bem-vindos aos Pa\u00edses Baixos, o pa\u00eds dos bitterballen, do queijo e do laranja!']},
+  pl:{v:'pl-PL', dep:['Cze\u015b\u0107','wszystkim, mi\u0142ego lotu!'], arr:['Witamy','w miejscowo\u015bci {p}! Witamy w Holandii, kraju bitterballen, sera i pomara\u0144czowego!']},
+  cs:{v:'cs-CZ', dep:['Ahoj','v\u0161ichni, \u0161\u0165astn\u00fd let!'], arr:['V\u00edtejte','v obci {p}! V\u00edtejte v Nizozemsku, zemi bitterballen, s\u00fdra a oran\u017eov\u00e9!']},
+  sk:{v:'sk-SK', dep:['Ahoj','v\u0161etci, \u0161\u0165astn\u00fd let!'], arr:['Vitajte','v obci {p}! Vitajte v Holandsku, krajine bitterballen, syra a oran\u017eovej!']},
+  hu:{v:'hu-HU', dep:['Sziasztok','mindenki, j\u00f3 utat!'], arr:['\u00dcdv\u00f6z\u00f6lj\u00fck','|\u00dcdv\u00f6z\u00f6lj\u00fck {p} telep\u00fcl\u00e9sen! \u00dcdv\u00f6z\u00f6lj\u00fck Hollandi\u00e1ban, a bitterballen, a sajt \u00e9s a narancss\u00e1rga orsz\u00e1g\u00e1ban!']},
+  ro:{v:'ro-RO', dep:['Pa','tuturor, zbor pl\u0103cut!'], arr:['Bine a\u021bi venit','la {p}! Bine a\u021bi venit \u00een \u021a\u0103rile de Jos, \u021bara bitterballen-ilor, a br\u00e2nzei \u0219i a portocaliului!']},
+  bg:{v:'bg-BG', dep:['\u0427\u0430\u043e','\u043d\u0430 \u0432\u0441\u0438\u0447\u043a\u0438, \u043f\u0440\u0438\u044f\u0442\u0435\u043d \u043f\u043e\u043b\u0435\u0442!'], arr:['\u0414\u043e\u0431\u0440\u0435 \u0434\u043e\u0448\u043b\u0438','\u0432 {p}! \u0414\u043e\u0431\u0440\u0435 \u0434\u043e\u0448\u043b\u0438 \u0432 \u041d\u0438\u0434\u0435\u0440\u043b\u0430\u043d\u0434\u0438\u044f, \u0441\u0442\u0440\u0430\u043d\u0430\u0442\u0430 \u043d\u0430 \u0431\u0438\u0442\u0435\u0440\u0431\u0430\u043b\u0435\u043d, \u0441\u0438\u0440\u0435\u043d\u0435\u0442\u043e \u0438 \u043e\u0440\u0430\u043d\u0436\u0435\u0432\u043e\u0442\u043e!']},
+  el:{v:'el-GR', dep:['\u0393\u03b5\u03b9\u03b1','\u03c3\u03b5 \u03cc\u03bb\u03bf\u03c5\u03c2, \u03ba\u03b1\u03bb\u03ae \u03c0\u03c4\u03ae\u03c3\u03b7!'], arr:['\u039a\u03b1\u03bb\u03ce\u03c2 \u03ae\u03c1\u03b8\u03b1\u03c4\u03b5','\u03c3\u03c4\u03b7\u03bd \u03c0\u03b5\u03c1\u03b9\u03bf\u03c7\u03ae {p}! \u039a\u03b1\u03bb\u03ce\u03c2 \u03ae\u03c1\u03b8\u03b1\u03c4\u03b5 \u03c3\u03c4\u03b7\u03bd \u039f\u03bb\u03bb\u03b1\u03bd\u03b4\u03af\u03b1, \u03c4\u03b7 \u03c7\u03ce\u03c1\u03b1 \u03c4\u03c9\u03bd \u03bc\u03c0\u03b9\u03c4\u03b5\u03c1\u03bc\u03c0\u03ac\u03bb\u03b5\u03bd, \u03c4\u03bf\u03c5 \u03c4\u03c5\u03c1\u03b9\u03bf\u03cd \u03ba\u03b1\u03b9 \u03c4\u03bf\u03c5 \u03c0\u03bf\u03c1\u03c4\u03bf\u03ba\u03b1\u03bb\u03af!']},
+  tr:{v:'tr-TR', dep:['Ho\u015f\u00e7a kal\u0131n','herkes, iyi u\u00e7u\u015flar!'], arr:['Ho\u015f geldiniz','|{p} b\u00f6lgesine ho\u015f geldiniz! Hollanda\u2019ya ho\u015f geldiniz: bitterballen, peynir ve turuncunun \u00fclkesi!']},
+  ru:{v:'ru-RU', dep:['\u041f\u043e\u043a\u0430','\u0432\u0441\u0435\u043c, \u0445\u043e\u0440\u043e\u0448\u0435\u0433\u043e \u043f\u043e\u043b\u0451\u0442\u0430!'], arr:['\u0414\u043e\u0431\u0440\u043e \u043f\u043e\u0436\u0430\u043b\u043e\u0432\u0430\u0442\u044c','\u0432 {p}! \u0414\u043e\u0431\u0440\u043e \u043f\u043e\u0436\u0430\u043b\u043e\u0432\u0430\u0442\u044c \u0432 \u041d\u0438\u0434\u0435\u0440\u043b\u0430\u043d\u0434\u044b, \u0441\u0442\u0440\u0430\u043d\u0443 \u0431\u0438\u0442\u0442\u0435\u0440\u0431\u0430\u043b\u043b\u0435\u043d, \u0441\u044b\u0440\u0430 \u0438 \u043e\u0440\u0430\u043d\u0436\u0435\u0432\u043e\u0433\u043e \u0446\u0432\u0435\u0442\u0430!']},
+  uk:{v:'uk-UA', dep:['\u0411\u0443\u0432\u0430\u0439\u0442\u0435','\u0432\u0441\u0456, \u0433\u0430\u0440\u043d\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u043e\u0442\u0443!'], arr:['\u041b\u0430\u0441\u043a\u0430\u0432\u043e \u043f\u0440\u043e\u0441\u0438\u043c\u043e','\u0434\u043e {p}! \u041b\u0430\u0441\u043a\u0430\u0432\u043e \u043f\u0440\u043e\u0441\u0438\u043c\u043e \u0434\u043e \u041d\u0456\u0434\u0435\u0440\u043b\u0430\u043d\u0434\u0456\u0432, \u043a\u0440\u0430\u0457\u043d\u0438 \u0431\u0456\u0442\u0442\u0435\u0440\u0431\u0430\u043b\u043b\u0435\u043d, \u0441\u0438\u0440\u0443 \u0442\u0430 \u043f\u043e\u043c\u0430\u0440\u0430\u043d\u0447\u0435\u0432\u043e\u0433\u043e!']},
+  sv:{v:'sv-SE', dep:['Hej d\u00e5','allihop, trevlig flygresa!'], arr:['V\u00e4lkommen','till {p}! V\u00e4lkommen till Nederl\u00e4nderna, landet med bitterballen, ost och orange!']},
+  nb:{v:'nb-NO', dep:['Ha det','alle sammen, god tur!'], arr:['Velkommen','til {p}! Velkommen til Nederland, landet med bitterballen, ost og oransje!']},
+  da:{v:'da-DK', dep:['Farvel','alle sammen, god flyvetur!'], arr:['Velkommen','til {p}! Velkommen til Holland, landet med bitterballen, ost og orange!']},
+  fi:{v:'fi-FI', dep:['Heippa','kaikille, hyv\u00e4\u00e4 lentoa!'], arr:['Tervetuloa','paikkakunnalle {p}! Tervetuloa Alankomaihin, bitterballenin, juuston ja oranssin maahan!']},
+  is:{v:'is-IS', dep:['Bless','\u00f6ll s\u00f6mul, g\u00f3\u00f0a fer\u00f0!'], arr:['Velkomin','til {p}! Velkomin til Hollands, lands bitterballen, osta og appels\u00ednuguls!']},
+  et:{v:'et-EE', dep:['N\u00e4gemist','k\u00f5igile, head lendu!'], arr:['Tere tulemast','kohta {p}! Tere tulemast Hollandisse, bitterballenite, juustu ja oran\u017ei maale!']},
+  lv:{v:'lv-LV', dep:['At\u0101','visiem, labu lidojumu!'], arr:['Laipni l\u016bdzam','\u2013 {p}! Laipni l\u016bdzam N\u012bderland\u0113, bitterballen, siera un oran\u017e\u0101s kr\u0101sas zem\u0113!']},
+  lt:{v:'lt-LT', dep:['Iki','visiems, gero skryd\u017eio!'], arr:['Sveiki atvyk\u0119','\u012f {p}! Sveiki atvyk\u0119 \u012f Nyderlandus \u2013 bitterballen, s\u016brio ir oran\u017ein\u0117s spalvos \u0161al\u012f!']},
+  hr:{v:'hr-HR', dep:['Bok','svima, sretan let!'], arr:['Dobro do\u0161li','u mjesto {p}! Dobro do\u0161li u Nizozemsku, zemlju bitterballena, sira i naran\u010daste boje!']},
+  sr:{v:'sr-RS', dep:['\u040b\u0430\u043e','\u0441\u0432\u0438\u043c\u0430, \u0441\u0440\u0435\u045b\u0430\u043d \u043b\u0435\u0442!'], arr:['\u0414\u043e\u0431\u0440\u043e \u0434\u043e\u0448\u043b\u0438','\u0443 \u043c\u0435\u0441\u0442\u043e {p}! \u0414\u043e\u0431\u0440\u043e \u0434\u043e\u0448\u043b\u0438 \u0443 \u0425\u043e\u043b\u0430\u043d\u0434\u0438\u0458\u0443, \u0437\u0435\u043c\u0459\u0443 \u0431\u0438\u0442\u0435\u0440\u0431\u0430\u043b\u0435\u043d\u0430, \u0441\u0438\u0440\u0430 \u0438 \u043d\u0430\u0440\u0430\u043d\u045f\u0430\u0441\u0442\u0435 \u0431\u043e\u0458\u0435!']},
+  sl:{v:'sl-SI', dep:['Adijo','vsem, sre\u010den let!'], arr:['Dobrodo\u0161li','v kraju {p}! Dobrodo\u0161li na Nizozemskem, v de\u017eeli bitterballnov, sira in oran\u017ene barve!']},
+  sq:{v:'sq-AL', dep:['Mirupafshim','t\u00eb gjith\u00ebve, fluturim t\u00eb mbar\u00eb!'], arr:['Mir\u00eb se vini','n\u00eb {p}! Mir\u00eb se vini n\u00eb Holand\u00eb, vendin e bitterballen-\u00ebve, djathit dhe portokallis\u00eb!']},
+  ar:{v:'ar-SA', dep:['\u0648\u062f\u0627\u0639\u064b\u0627','\u0644\u0644\u062c\u0645\u064a\u0639\u060c \u0631\u062d\u0644\u0629 \u0633\u0639\u064a\u062f\u0629!'], arr:['\u0623\u0647\u0644\u0627\u064b \u0648\u0633\u0647\u0644\u0627\u064b','\u0641\u064a {p}! \u0623\u0647\u0644\u0627\u064b \u0628\u0643\u0645 \u0641\u064a \u0647\u0648\u0644\u0646\u062f\u0627\u060c \u0628\u0644\u062f \u0627\u0644\u0628\u064a\u062a\u0631\u0628\u0627\u0644\u0646 \u0648\u0627\u0644\u062c\u0628\u0646 \u0648\u0627\u0644\u0644\u0648\u0646 \u0627\u0644\u0628\u0631\u062a\u0642\u0627\u0644\u064a!']},
+  he:{v:'he-IL', dep:['\u05d1\u05d9\u05d9','\u05dc\u05db\u05d5\u05dc\u05dd, \u05d8\u05d9\u05e1\u05d4 \u05e0\u05e2\u05d9\u05de\u05d4!'], arr:['\u05d1\u05e8\u05d5\u05db\u05d9\u05dd \u05d4\u05d1\u05d0\u05d9\u05dd','\u05dc\u05be{p}! \u05d1\u05e8\u05d5\u05db\u05d9\u05dd \u05d4\u05d1\u05d0\u05d9\u05dd \u05dc\u05d4\u05d5\u05dc\u05e0\u05d3, \u05d0\u05e8\u05e5 \u05d4\u05d1\u05d9\u05d8\u05e8\u05d1\u05d0\u05dc\u05df, \u05d4\u05d2\u05d1\u05d9\u05e0\u05d4 \u05d5\u05d4\u05db\u05ea\u05d5\u05dd!']},
+  fa:{v:'fa-IR', dep:['\u062e\u062f\u0627\u062d\u0627\u0641\u0638','\u0647\u0645\u06af\u06cc\u060c \u067e\u0631\u0648\u0627\u0632 \u062e\u0648\u0628\u06cc \u062f\u0627\u0634\u062a\u0647 \u0628\u0627\u0634\u06cc\u062f!'], arr:['\u062e\u0648\u0634 \u0622\u0645\u062f\u06cc\u062f','|\u0628\u0647 {p} \u062e\u0648\u0634 \u0622\u0645\u062f\u06cc\u062f! \u0628\u0647 \u0647\u0644\u0646\u062f \u062e\u0648\u0634 \u0622\u0645\u062f\u06cc\u062f\u060c \u0633\u0631\u0632\u0645\u06cc\u0646 \u0628\u06cc\u062a\u0631\u0628\u0627\u0644\u0646\u060c \u067e\u0646\u06cc\u0631 \u0648 \u0646\u0627\u0631\u0646\u062c\u06cc!']},
+  hi:{v:'hi-IN', dep:['\u0905\u0932\u0935\u093f\u0926\u093e','\u0938\u092c\u0915\u094b, \u0906\u092a\u0915\u0940 \u0909\u0921\u093c\u093e\u0928 \u0936\u0941\u092d \u0939\u094b!'], arr:['\u0938\u094d\u0935\u093e\u0917\u0924 \u0939\u0948','|{p} \u092e\u0947\u0902 \u0906\u092a\u0915\u093e \u0938\u094d\u0935\u093e\u0917\u0924 \u0939\u0948! \u0928\u0940\u0926\u0930\u0932\u0948\u0902\u0921 \u092e\u0947\u0902 \u0906\u092a\u0915\u093e \u0938\u094d\u0935\u093e\u0917\u0924 \u0939\u0948, \u092c\u093f\u091f\u0930\u092c\u093e\u0932\u0947\u0928, \u091a\u0940\u091c\u093c \u0914\u0930 \u0928\u093e\u0930\u0902\u0917\u0940 \u0930\u0902\u0917 \u0915\u093e \u0926\u0947\u0936!']},
+  zh:{v:'zh-CN', dep:['\u518d\u89c1','\u5927\u5bb6\uff0c\u4e00\u8def\u987a\u98ce\uff01'], arr:['\u6b22\u8fce','|\u6b22\u8fce\u6765\u5230{p}\uff01\u6b22\u8fce\u6765\u5230\u8377\u5170\u2014\u2014\u70b8\u8089\u4e38\u3001\u5976\u916a\u548c\u6a59\u8272\u7684\u56fd\u5ea6\uff01']},
+  ja:{v:'ja-JP', dep:['\u30d0\u30a4\u30d0\u30a4','\u307f\u3093\u306a\u3001\u826f\u3044\u30d5\u30e9\u30a4\u30c8\u3092\uff01'], arr:['\u3088\u3046\u3053\u305d','|{p}\u3078\u3088\u3046\u3053\u305d\uff01\u30d3\u30bf\u30fc\u30d0\u30ec\u30f3\u3068\u30c1\u30fc\u30ba\u3068\u30aa\u30ec\u30f3\u30b8\u306e\u56fd\u3001\u30aa\u30e9\u30f3\u30c0\u3078\u3088\u3046\u3053\u305d\uff01']},
+  ko:{v:'ko-KR', dep:['\uc548\ub155\ud788 \uac00\uc138\uc694','\uc5ec\ub7ec\ubd84, \uc990\uac70\uc6b4 \ube44\ud589 \ub418\uc138\uc694!'], arr:['\ud658\uc601\ud569\ub2c8\ub2e4','|{p}\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4! \ube44\ud130\ubc1c\ub80c, \uce58\uc988, \uc624\ub80c\uc9c0\uc758 \ub098\ub77c \ub124\ub35c\ub780\ub4dc\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4!']},
+  th:{v:'th-TH', dep:['\u0e25\u0e32\u0e01\u0e48\u0e2d\u0e19','\u0e17\u0e38\u0e01\u0e04\u0e19 \u0e40\u0e14\u0e34\u0e19\u0e17\u0e32\u0e07\u0e1b\u0e25\u0e2d\u0e14\u0e20\u0e31\u0e22\u0e19\u0e30!'], arr:['\u0e22\u0e34\u0e19\u0e14\u0e35\u0e15\u0e49\u0e2d\u0e19\u0e23\u0e31\u0e1a','\u0e2a\u0e39\u0e48 {p}! \u0e22\u0e34\u0e19\u0e14\u0e35\u0e15\u0e49\u0e2d\u0e19\u0e23\u0e31\u0e1a\u0e2a\u0e39\u0e48\u0e40\u0e19\u0e40\u0e18\u0e2d\u0e23\u0e4c\u0e41\u0e25\u0e19\u0e14\u0e4c \u0e14\u0e34\u0e19\u0e41\u0e14\u0e19\u0e41\u0e2b\u0e48\u0e07\u0e1a\u0e34\u0e17\u0e40\u0e17\u0e2d\u0e23\u0e4c\u0e1a\u0e32\u0e25\u0e40\u0e25\u0e19 \u0e0a\u0e35\u0e2a \u0e41\u0e25\u0e30\u0e2a\u0e35\u0e2a\u0e49\u0e21!']},
+  id:{v:'id-ID', dep:['Sampai jumpa','semuanya, selamat terbang!'], arr:['Selamat datang','di {p}! Selamat datang di Belanda, negeri bitterballen, keju, dan oranye!']},
+  ms:{v:'ms-MY', dep:['Selamat tinggal','semua, selamat terbang!'], arr:['Selamat datang','ke {p}! Selamat datang ke Belanda, negara bitterballen, keju dan oren!']},
+  vi:{v:'vi-VN', dep:['T\u1ea1m bi\u1ec7t','m\u1ecdi ng\u01b0\u1eddi, ch\u00fac chuy\u1ebfn bay vui v\u1ebb!'], arr:['Ch\u00e0o m\u1eebng','\u0111\u1ebfn {p}! Ch\u00e0o m\u1eebng \u0111\u1ebfn H\u00e0 Lan, x\u1ee9 s\u1edf c\u1ee7a bitterballen, ph\u00f4 mai v\u00e0 m\u00e0u cam!']},
+  sw:{v:'sw-KE', dep:['Kwaherini','nyote, safari njema!'], arr:['Karibuni','{p}! Karibuni Uholanzi, nchi ya bitterballen, jibini na rangi ya chungwa!']},
+};
+// Land (ISO2) -> taal. Niet genoemd = Engels.
+const COUNTRY_LANG = Object.fromEntries((
+  'NL nl,BE nl,SR nl,CW nl,AW nl,BQ nl,SX nl,' +
+  'DE de,AT de,CH de,LI de,FR fr,MC fr,LU fr,SN fr,CI fr,CM fr,ES es,AD es,MX es,AR es,CL es,CO es,PE es,EC es,DO es,CU es,CR es,PA es,UY es,' +
+  'IT it,SM it,VA it,PT pt,BR pt,CV pt,AO pt,PL pl,CZ cs,SK sk,HU hu,RO ro,MD ro,BG bg,GR el,CY el,TR tr,' +
+  'RU ru,BY ru,KZ ru,UA uk,SE sv,NO nb,DK da,FI fi,IS is,EE et,LV lv,LT lt,HR hr,BA hr,RS sr,ME sr,SI sl,AL sq,XK sq,' +
+  'MA ar,DZ ar,TN ar,EG ar,JO ar,LB ar,SA ar,AE ar,QA ar,KW ar,BH ar,OM ar,IL he,IR fa,IN hi,CN zh,HK zh,TW zh,SG en,' +
+  'JP ja,KR ko,TH th,ID id,MY ms,VN vi,KE sw,TZ sw'
+).split(',').map(x => x.split(' ')));
+
+
+/* Welkom in het land van de luchthaven: per land "in X" en drie dingen waar het
+   bekend om staat, in de taal van de app. */
+const HOSTS = {
+  AL:{nl:['in Albani\u00eb','byrek, adelaars en de Albanese Rivi\u00e8ra'], en:['to Albania','byrek, eagles and the Albanian Riviera'], de:['in Albanien','Byrek, Adlern und der Albanischen Riviera']},
+  AT:{nl:['in Oostenrijk','schnitzel, Mozart en sachertaart'], en:['to Austria','schnitzel, Mozart and Sachertorte'], de:['in \u00d6sterreich','Schnitzel, Mozart und Sachertorte']},
+  BA:{nl:['in Bosni\u00eb en Herzegovina','\u0107evapi, de Oude Brug en sterke koffie'], en:['to Bosnia and Herzegovina','\u0107evapi, the Old Bridge and strong coffee'], de:['in Bosnien und Herzegowina','\u0106evapi, der Alten Br\u00fccke und starkem Kaffee']},
+  BE:{nl:['in Belgi\u00eb','frietjes, wafels en chocolade'], en:['to Belgium','fries, waffles and chocolate'], de:['in Belgien','Pommes, Waffeln und Schokolade']},
+  BG:{nl:['in Bulgarije','yoghurt, rozenolie en de Zwarte Zee'], en:['to Bulgaria','yoghurt, rose oil and the Black Sea'], de:['in Bulgarien','Joghurt, Rosen\u00f6l und dem Schwarzen Meer']},
+  BY:{nl:['in Belarus','draniki, bossen en meren'], en:['to Belarus','draniki, forests and lakes'], de:['in Belarus','Draniki, W\u00e4ldern und Seen']},
+  CH:{nl:['in Zwitserland','kaasfondue, chocolade en de Alpen'], en:['to Switzerland','cheese fondue, chocolate and the Alps'], de:['in der Schweiz','K\u00e4sefondue, Schokolade und den Alpen']},
+  CY:{nl:['op Cyprus','halloumi, zon en zee'], en:['to Cyprus','halloumi, sunshine and the sea'], de:['auf Zypern','Halloumi, Sonne und Meer']},
+  CZ:{nl:['in Tsjechi\u00eb','pilsener, knedl\u00edky en de Karelsbrug'], en:['to Czechia','pilsner, dumplings and the Charles Bridge'], de:['in Tschechien','Pilsner, Kn\u00f6deln und der Karlsbr\u00fccke']},
+  DE:{nl:['in Duitsland','braadworst, brezels en de Autobahn'], en:['to Germany','bratwurst, pretzels and the Autobahn'], de:['in Deutschland','Bratwurst, Brezeln und der Autobahn']},
+  DK:{nl:['in Denemarken','sm\u00f8rrebr\u00f8d, LEGO en hygge'], en:['to Denmark','sm\u00f8rrebr\u00f8d, LEGO and hygge'], de:['in D\u00e4nemark','Sm\u00f8rrebr\u00f8d, LEGO und Hygge']},
+  EE:{nl:['in Estland','sauna\u2019s, zangfestivals en snel internet'], en:['to Estonia','saunas, song festivals and fast internet'], de:['in Estland','Saunen, S\u00e4ngerfesten und schnellem Internet']},
+  ES:{nl:['in Spanje','paella, tapas en flamenco'], en:['to Spain','paella, tapas and flamenco'], de:['in Spanien','Paella, Tapas und Flamenco']},
+  FI:{nl:['in Finland','sauna\u2019s, meren en het noorderlicht'], en:['to Finland','saunas, lakes and the northern lights'], de:['in Finnland','Saunen, Seen und Nordlichtern']},
+  FO:{nl:['op de Faer\u00f6er','schapen, kliffen en wind'], en:['to the Faroe Islands','sheep, cliffs and wind'], de:['auf den F\u00e4r\u00f6ern','Schafen, Klippen und Wind']},
+  FR:{nl:['in Frankrijk','croissants, kaas en de Eiffeltoren'], en:['to France','croissants, cheese and the Eiffel Tower'], de:['in Frankreich','Croissants, K\u00e4se und dem Eiffelturm']},
+  GB:{nl:['in het Verenigd Koninkrijk','fish-and-chips, thee en rode dubbeldekkers'], en:['to the United Kingdom','fish and chips, tea and red double-deckers'], de:['im Vereinigten K\u00f6nigreich','Fish and Chips, Tee und roten Doppeldeckern']},
+  GI:{nl:['in Gibraltar','de Rots, apen en zon'], en:['to Gibraltar','the Rock, monkeys and sunshine'], de:['in Gibraltar','dem Felsen, Affen und Sonne']},
+  GR:{nl:['in Griekenland','feta, olijven en eilanden'], en:['to Greece','feta, olives and islands'], de:['in Griechenland','Feta, Oliven und Inseln']},
+  HR:{nl:['in Kroati\u00eb','eilanden, de Adriatische Zee en peka'], en:['to Croatia','islands, the Adriatic and peka'], de:['in Kroatien','Inseln, der Adria und Peka']},
+  HU:{nl:['in Hongarije','goulash, paprika en thermale baden'], en:['to Hungary','goulash, paprika and thermal baths'], de:['in Ungarn','Gulasch, Paprika und Thermalb\u00e4dern']},
+  IE:{nl:['in Ierland','groene heuvels, Guinness en Ierse muziek'], en:['to Ireland','green hills, Guinness and Irish music'], de:['in Irland','gr\u00fcnen H\u00fcgeln, Guinness und irischer Musik']},
+  IM:{nl:['op het eiland Man','TT-races, katten zonder staart en kliffen'], en:['to the Isle of Man','the TT races, tailless cats and sea cliffs'], de:['auf der Isle of Man','TT-Rennen, schwanzlosen Katzen und Klippen']},
+  IS:{nl:['in IJsland','geisers, vulkanen en het noorderlicht'], en:['to Iceland','geysers, volcanoes and the northern lights'], de:['in Island','Geysiren, Vulkanen und Nordlichtern']},
+  IT:{nl:['in Itali\u00eb','pizza, pasta en espresso'], en:['to Italy','pizza, pasta and espresso'], de:['in Italien','Pizza, Pasta und Espresso']},
+  LT:{nl:['in Litouwen','cepelinai, barnsteen en basketbal'], en:['to Lithuania','cepelinai, amber and basketball'], de:['in Litauen','Cepelinai, Bernstein und Basketball']},
+  LU:{nl:['in Luxemburg','kastelen, wijn en een groothertog'], en:['to Luxembourg','castles, wine and a Grand Duke'], de:['in Luxemburg','Burgen, Wein und einem Gro\u00dfherzog']},
+  LV:{nl:['in Letland','roggebrood, zangfestivals en de Oostzee'], en:['to Latvia','rye bread, song festivals and the Baltic Sea'], de:['in Lettland','Roggenbrot, S\u00e4ngerfesten und der Ostsee']},
+  MD:{nl:['in Moldavi\u00eb','wijnkelders, pl\u0103cint\u0103 en zonnebloemen'], en:['to Moldova','wine cellars, pl\u0103cint\u0103 and sunflowers'], de:['in Moldau','Weinkellern, Pl\u0103cint\u0103 und Sonnenblumen']},
+  ME:{nl:['in Montenegro','bergen, de Baai van Kotor en de Adriatische Zee'], en:['to Montenegro','mountains, the Bay of Kotor and the Adriatic'], de:['in Montenegro','Bergen, der Bucht von Kotor und der Adria']},
+  MK:{nl:['in Noord-Macedoni\u00eb','ajvar, het Ohridmeer en oude kerkjes'], en:['to North Macedonia','ajvar, Lake Ohrid and old churches'], de:['in Nordmazedonien','Ajvar, dem Ohridsee und alten Kirchen']},
+  MT:{nl:['op Malta','pastizzi, zon en ridders'], en:['to Malta','pastizzi, sunshine and knights'], de:['auf Malta','Pastizzi, Sonne und Rittern']},
+  NL:{nl:['in Nederland','bitterballen, kaas en oranje'], en:['to the Netherlands','bitterballen, cheese and orange'], de:['in den Niederlanden','Bitterballen, K\u00e4se und Orange']},
+  NO:{nl:['in Noorwegen','fjorden, bruine kaas en het noorderlicht'], en:['to Norway','fjords, brown cheese and the northern lights'], de:['in Norwegen','Fjorden, braunem K\u00e4se und Nordlichtern']},
+  PL:{nl:['in Polen','pierogi, \u017curek en Chopin'], en:['to Poland','pierogi, \u017curek and Chopin'], de:['in Polen','Pierogi, \u017burek und Chopin']},
+  PT:{nl:['in Portugal','past\u00e9is de nata, fado en de oceaan'], en:['to Portugal','past\u00e9is de nata, fado and the ocean'], de:['in Portugal','Past\u00e9is de Nata, Fado und dem Ozean']},
+  RO:{nl:['in Roemeni\u00eb','mici, de Karpaten en kastelen'], en:['to Romania','mici, the Carpathians and castles'], de:['in Rum\u00e4nien','Mici, den Karpaten und Burgen']},
+  RS:{nl:['in Servi\u00eb','\u0107evapi, ajvar en de Donau'], en:['to Serbia','\u0107evapi, ajvar and the Danube'], de:['in Serbien','\u0106evapi, Ajvar und der Donau']},
+  RU:{nl:['in Rusland','borsjt, ballet en matroesjka\u2019s'], en:['to Russia','borscht, ballet and matryoshka dolls'], de:['in Russland','Borschtsch, Ballett und Matrjoschkas']},
+  SE:{nl:['in Zweden','kanelbullar, fika en ABBA'], en:['to Sweden','cinnamon buns, fika and ABBA'], de:['in Schweden','Zimtschnecken, Fika und ABBA']},
+  SI:{nl:['in Sloveni\u00eb','de Alpen, het meer van Bled en grotten'], en:['to Slovenia','the Alps, Lake Bled and caves'], de:['in Slowenien','den Alpen, dem Bleder See und H\u00f6hlen']},
+  SK:{nl:['in Slowakije','bryndzov\u00e9 halu\u0161ky, kastelen en de Tatra'], en:['to Slovakia','bryndzov\u00e9 halu\u0161ky, castles and the Tatras'], de:['in der Slowakei','Bryndzov\u00e9 Halu\u0161ky, Burgen und der Tatra']},
+  TR:{nl:['in Turkije','baklava, thee en de Bosporus'], en:['to T\u00fcrkiye','baklava, tea and the Bosphorus'], de:['in der T\u00fcrkei','Baklava, Tee und dem Bosporus']},
+  XK:{nl:['in Kosovo','flija, bergen en sterke koffie'], en:['to Kosovo','flija, mountains and strong coffee'], de:['im Kosovo','Flija, Bergen und starkem Kaffee']},
+};
+function hostLine(iso){
+  const h = HOSTS[(iso || '').toUpperCase()];
+  if (!h) return null;
+  const [where, things] = h[LANG] || h.en;
+  return t('welcomeHost', {c: where, x: things});
+}
+
+function greetingFor(route){
+  const tgt = anthemTarget(route);
+  if (!tgt) return null;
+  const arriving = tgt.why === 'komt uit';
+  const lang = COUNTRY_LANG[(tgt.iso||'').toUpperCase()] || 'en';
+  const g = GREET[lang], [big, rest] = arriving ? g.arr : g.dep;
+  const full = rest.startsWith('|');
+  let body = full ? rest.slice(1) : rest;
+  // landing: alleen "welkom in <plaats>!" in de taal van het vliegtuig; het land
+  // van de luchthaven komt in een eigen zin in de taal van de app
+  let extra = null;
+  if (arriving){
+    const first = body.match(/^.*?\{p\}[^!\uff01]*[!\uff01]/);
+    if (first) body = first[0];
+    extra = hostLine(route.destination?.country_iso_name);
+  }
+  const restText = body.replace('{p}', placeLabel());
+  return {lang, voice:g.v, big, rest:restText, say: full ? restText : `${big} ${restText}`, extra};
+}
+let greetNow = null;
+function showGreeting(route){
+  const g = route ? greetingFor(route) : null;
+  greetNow = g;
+  const big = $('greetBig'), rest = $('greetRest');
+  if (!g){ big.hidden = true; rest.hidden = true; return; }
+  big.textContent = g.big; big.lang = g.lang;
+  $('greetText').textContent = g.rest; $('greetText').lang = g.lang;
+  $('greetHost').textContent = g.extra || ''; $('greetHost').hidden = !g.extra;
+  big.hidden = false; rest.hidden = false;
+}
+function sayIn(text, voiceTag){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = voiceTag;
+  const pre = voiceTag.split('-')[0];
+  const voices = speechSynthesis.getVoices();
+  u.voice = voices.find(v => v.lang.replace('_','-') === voiceTag) || voices.find(v => v.lang.startsWith(pre)) || null;
+  u.rate = 0.95;
+  speechSynthesis.speak(u);                     // spreekt na elkaar, in de wachtrij
+}
+function speakGreeting(){
+  if (!greetNow || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  sayIn(greetNow.say, greetNow.voice);
+  if (greetNow.extra) sayIn(greetNow.extra, LOCALE);
+}
+
+function showRoute(p, route){
+  showGreeting(route);
+  const el=$('route');
+  if (!route){ el.textContent = p.callsign ? t('routeUnknown') : t('noCallsign'); $('flag').textContent=''; return; }
+  const o=route.origin, d=route.destination, tgt=anthemTarget(route);
+  const airline = route.airline?.name ? ` \u00b7 ${route.airline.name}` : '';
+  el.innerHTML = '';
+  const s = document.createElement('span');
+  s.textContent = `${o?.municipality||o?.iata_code||'?'} `;
+  const a = document.createElement('span'); a.className='arrow'; a.textContent='\u2192';
+  const e = document.createElement('span');
+  e.textContent = ` ${d?.municipality||d?.iata_code||'?'}${airline}`;
+  el.append(s,a,e);
+  $('flag').textContent = flagOf(tgt?.iso);
+}
+function addHistory(p, route){
+  const tgt=anthemTarget(route);
+  const prev = history.findIndex(h => h.hex === p.hex);
+  const played = prev >= 0 ? history[prev].played : [];
+  if (prev >= 0) history.splice(prev, 1);
+  history.unshift({hex:p.hex, cs:p.callsign||p.hex, flag:flagOf(tgt?.iso), where: route ? `${route.origin?.municipality||'?'} \u2192 ${route.destination?.municipality||'?'}` : t('routeUnknown'), time:new Date(), played});
+  history.length = Math.min(history.length, 8);
+  renderHistory();
+}
+function renderHistory(){
+  const ol=$('history'); ol.innerHTML='';
+  if (!history.length){ ol.append(el('li', 'empty', t('nothingYet'))); return; }
+  history.forEach(h=>{
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="cs"></span><span class="w"></span><span class="t"></span>`;
+    li.querySelector('.cs').textContent=h.cs;
+    li.querySelector('.w').textContent=`${h.flag} ${h.where}`;
+    li.querySelector('.t').textContent=hhmm(h.time);
+    if (h.played?.length){
+      const pl = el('div', 'pl');
+      h.played.forEach(x => pl.append(el('span', null, `\u266a ${x}`)));
+      li.append(pl);
+    }
+    ol.append(li);
+  });
+}
+
+/* ---------- Speellijst: wat er is afgespeeld ----------
+   Elk nieuw nummer, elke zenderwissel en elk volkslied komt in de speellijst
+   (rechterkolom) en wordt gekoppeld aan het vliegtuig dat op dat moment de dj
+   was, zodat je het bij "Eerder overgekomen" terugziet. */
+const playLog = [];
+let playId = 0;
+const lastPlayKey = {};
+function logPlay(e){
+  if (lastPlayKey[e.kind] === e.key) return;
+  lastPlayKey[e.kind] = e.key;
+  e.time = new Date(); e.id = ++playId;
+  playLog.unshift(e);
+  playLog.length = Math.min(playLog.length, 40);
+  renderPlaylist();
+  // koppelen aan het vliegtuig op het bord, anders aan het laatst overgekomen toestel
+  const h = history.find(x => x.hex === current) || history[0];
+  if (h){
+    h.played = h.played || [];
+    const txt = playText(e);
+    if (!h.played.includes(txt)){ h.played.unshift(txt); h.played.length = Math.min(h.played.length, 3); renderHistory(); }
+  }
+}
+function playText(e){
+  return `${e.disc.track.title} \u00b7 ${e.disc.artist.name}`;
+}
+const hhmm = d => d.toLocaleTimeString(LOCALE, {hour:'2-digit', minute:'2-digit'});
+function renderPlaylist(){
+  const ol = $('playlist'); ol.innerHTML = '';
+  if (!playLog.length){ ol.append(el('li', 'empty', t('playlistEmpty'))); return; }
+  playLog.slice(0, 10).forEach(e => {
+    const li = el('li', 'pl-' + e.kind);
+    const what = el('span', 'w');
+    what.append(el('span', 'fl', flagOf(e.iso) || '\u266a'));
+    const tx = el('span', 'tx');
+    tx.append(el('b', null, e.disc.track.title), document.createTextNode(` \u00b7 ${e.disc.artist.name}`));
+    tx.append(el('small', null, countryName(e.iso, e.country)));
+    what.append(tx);
+    li.append(what, el('span', 't', hhmm(e.time)));
+    const playing = nowDisc && nowDisc.track.preview === e.disc.track.preview;
+    const b = el('button', 'pl-play', playing ? '\u266b' : '\u25b6');
+    b.type = 'button'; b.dataset.id = e.id;
+    b.title = t('replay', {s: e.disc.track.title}); b.setAttribute('aria-label', b.title);
+    if (playing) li.classList.add('pinned');
+    li.append(b);
+    ol.append(li);
+  });
+}
+
+/* ---------- Radar met vloeiende beweging ----------
+   Tussen twee updates rekenen we elke frame door waar het toestel nu is
+   (positie + snelheid \u00d7 verstreken tijd, in de vliegrichting). Komt er nieuwe
+   data, dan glijdt het icoon in ~0,6 s naar de nieuwe plek in plaats van te springen. */
+const display = new Map();      // hex -> {x, y, hdg, trail:[]}  (km t.o.v. jou, x=oost, y=noord)
+let lastFrame = performance.now();
+
+function predicted(p, now){
+  const hdg = (p.track ?? p.true_heading ?? 0) * Math.PI/180;
+  const x0 = Math.sin(p.b)*p.d, y0 = Math.cos(p.b)*p.d;
+  if (!p.gs || p.alt === 0 && p.gs < 3) return {x:x0, y:y0, hdg};
+  const dt = Math.min((now - p.t0)/1000, 20);           // niet eindeloos doorrekenen
+  const v = p.gs*1.852/3600;                              // knopen -> km/s
+  return {x:x0 + Math.sin(hdg)*v*dt, y:y0 + Math.cos(hdg)*v*dt, hdg};
+}
+
+
+/* ---------- Referentie op de radar: plaatsnamen en landingsbanen ---------- */
+// Reserve als OpenStreetMap niet bereikbaar is: plaatsen rond Schiphol
+const PLACES_FALLBACK = [
+  ['Amsterdam',52.3728,4.8936,'city'], ['Haarlem',52.3812,4.6369,'city'], ['Hoofddorp',52.3026,4.6892,'town'],
+  ['Amstelveen',52.3002,4.8636,'town'], ['Aalsmeer',52.2598,4.7613,'town'], ['Badhoevedorp',52.3389,4.7836,'village'],
+  ['Zwanenburg',52.3786,4.7445,'village'], ['Halfweg',52.3833,4.7514,'village'], ['Nieuw-Vennep',52.2644,4.6339,'town'],
+  ['Rijsenhout',52.2611,4.7069,'village'], ['Lijnden',52.3517,4.7553,'village'], ['Boesingheliede',52.3389,4.7206,'village'],
+  ['Zwaanshoek',52.3108,4.6497,'village'], ['Uithoorn',52.2386,4.8264,'town'], ['Spaarndam',52.4122,4.6867,'village'],
+];
+let places = null, placesKey = '';
+function placesAround(lat, lon){
+  const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  if (key === placesKey) return;
+  placesKey = key;
+  const q = `[out:json][timeout:20];node(around:16000,${lat.toFixed(2)},${lon.toFixed(2)})[place~"^(city|town|village)$"][name];out body;`;
+  getJSON('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(q))
+    .then(j => {
+      if (placesKey !== key) return;
+      const list = (j.elements || []).map(e => [e.tags['name:nl'] || e.tags.name, e.lat, e.lon, e.tags.place, +e.tags.population || 0]);
+      places = list.length ? list : PLACES_FALLBACK;
+    })
+    .catch(() => { if (placesKey === key){ places = PLACES_FALLBACK; placesKey = ''; } });   // later opnieuw proberen
+}
+const PLACE_RANK = {city: 3, town: 2, village: 1};
+
+function drawReference(ctx, C, scale, maxKm){
+  const toXY = (la, lo) => { const d = distKm(here.lat, here.lon, la, lo), b = bearing(here.lat, here.lon, la, lo);
+    return [C + Math.sin(b)*d*scale, C - Math.cos(b)*d*scale, d]; };
+  const inside = (x, y) => Math.hypot(x - C, y - C) < C - 4;
+
+  // banen
+  ctx.save(); ctx.lineCap = 'butt';
+  for (const [, , , a1, o1, a2, o2] of RWYS){
+    if (Math.abs(a1 - here.lat) > 0.3 || Math.abs(o1 - here.lon) > 0.5) continue;   // snel overslaan: ver weg
+    const [x1, y1, d1] = toXY(a1, o1), [x2, y2, d2] = toXY(a2, o2);
+    if (Math.min(d1, d2) > maxKm) continue;
+    ctx.strokeStyle = '#4d5054'; ctx.lineWidth = Math.max(4, 0.06*scale);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(242,242,236,.35)'; ctx.lineWidth = 1; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.restore();
+
+  // plaatsnamen: grote plaatsen eerst, geen overlappende labels
+  placesAround(here.lat, here.lon);
+  const list = (places || PLACES_FALLBACK)
+    .map(([name, la, lo, type, pop]) => { const [x, y, d] = toXY(la, lo); return {name, x, y, d, r: PLACE_RANK[type] || 0, pop: pop || 0}; })
+    .filter(p => p.d < maxKm && inside(p.x, p.y) && (p.r >= 2 || p.d < maxKm*0.75))
+    .sort((a, b) => b.r - a.r || b.pop - a.pop || a.d - b.d);
+  const boxes = [[C - 24, C - 24, C + 24, C + 24]];               // midden (jij) vrijhouden
+  ctx.save(); ctx.textBaseline = 'middle';
+  let n = 0;
+  for (const p of list){
+    if (n >= 18) break;
+    const size = p.r === 3 ? 28 : p.r === 2 ? 23 : 19;
+    ctx.font = `${p.r >= 2 ? 600 : 500} ${size}px "Barlow Condensed", sans-serif`;
+    const w = ctx.measureText(p.name).width;
+    const hit = bx => bx[2] > 2*C - 6 || bx[0] < 6 || boxes.some(b => bx[0] < b[2] && bx[2] > b[0] && bx[1] < b[3] && bx[3] > b[1]);
+    const right = [p.x + 6, p.y - size/2 - 2, p.x + 10 + w, p.y + size/2 + 2];
+    const left  = [p.x - 10 - w, right[1], p.x - 6, right[3]];
+    const above = [p.x - w/2, p.y - size - 8, p.x + w/2, p.y - 6];
+    const below = [p.x - w/2, p.y + 6, p.x + w/2, p.y + size + 8];
+    const box = [right, left, above, below].find(b => !hit(b));       // eerste plek die vrij is
+    if (!box) continue;
+    boxes.push(box); n++;
+    ctx.fillStyle = 'rgba(154,156,152,.55)';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r >= 2 ? 3.5 : 2.5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = p.r >= 2 ? 'rgba(242,242,236,.55)' : 'rgba(242,242,236,.38)';
+    ctx.fillText(p.name, box[0] + (box === right ? 4 : 0), (box[1] + box[3]) / 2);
+  }
+  ctx.restore();
+}
+
+function render(){
+  const now = performance.now();
+  const dt = Math.min((now - lastFrame)/1000, 0.25); lastFrame = now;
+  const k = 1 - Math.exp(-dt/0.25);                       // afvlakking
+
+  const cv=$('radar'), ctx=cv.getContext('2d'), W=cv.width, C=W/2, maxKm=FETCH_NM*1.852;
+  const scale=(C-20)/maxKm;
+  ctx.clearRect(0,0,W,W);
+  ctx.strokeStyle='#45484b'; ctx.fillStyle='#7d807c'; ctx.lineWidth=1.5; ctx.font='20px Barlow, sans-serif';
+  [1,5,10].filter(r=>r<=maxKm).forEach(r=>{ ctx.beginPath(); ctx.arc(C,C,r*scale,0,Math.PI*2); ctx.stroke(); ctx.fillText(`${r} km`, C+6, C-r*scale-6); });
+  drawReference(ctx, C, scale, maxKm);
+  ctx.fillStyle='rgba(255,194,14,.10)'; ctx.beginPath(); ctx.arc(C,C,radiusKm*scale,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#f2f2ec'; ctx.beginPath(); ctx.arc(C,C,6,0,Math.PI*2); ctx.fill();
+
+  const seen = new Set();
+  lastPlanes.forEach(p=>{
+    seen.add(p.hex);
+    const target = predicted(p, now);
+    let d = display.get(p.hex);
+    if (!d){ d = {...target, trail:[]}; display.set(p.hex, d); }
+    else {
+      // te grote sprong (bijv. andere plek gekozen)? dan direct zetten
+      if (Math.hypot(target.x-d.x, target.y-d.y) > 3){ d.x=target.x; d.y=target.y; d.trail=[]; }
+      d.x += (target.x-d.x)*k; d.y += (target.y-d.y)*k;
+      let dh = target.hdg - d.hdg; dh = Math.atan2(Math.sin(dh), Math.cos(dh));
+      d.hdg += dh*k;
+    }
+    const x=C+d.x*scale, y=C-d.y*scale;
+    const isTop=p.hex===current, low=p.alt>0&&p.alt<MAX_ALT_FT, flying=p.alt>0;
+
+    // spoor achter vliegende toestellen
+    if (flying){
+      const last = d.trail[d.trail.length-1];
+      if (!last || Math.hypot(last[0]-x, last[1]-y) > 4) { d.trail.push([x,y]); if (d.trail.length>40) d.trail.shift(); }
+      if (d.trail.length>1){
+        ctx.strokeStyle = isTop ? 'rgba(255,194,14,.45)' : 'rgba(242,242,236,.18)';
+        ctx.lineWidth = isTop ? 3 : 2;
+        ctx.beginPath(); ctx.moveTo(d.trail[0][0], d.trail[0][1]);
+        d.trail.forEach(([tx,ty])=>ctx.lineTo(tx,ty)); ctx.lineTo(x,y); ctx.stroke();
+      }
+    }
+
+    ctx.save(); ctx.translate(x,y); ctx.rotate(d.hdg);
+    ctx.fillStyle = isTop ? '#ffc20e' : low ? '#f2f2ec' : '#6f726e';
+    const s = isTop ? 13 : 8;
+    ctx.beginPath(); ctx.moveTo(0,-s); ctx.lineTo(s*.65,s); ctx.lineTo(0,s*.55); ctx.lineTo(-s*.65,s); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    if (isTop || (low && p.d<maxKm*.6)){
+      ctx.fillStyle = isTop ? '#ffc20e' : '#b9bbb6';
+      ctx.font = `${isTop?600:500} ${isTop?24:18}px "Barlow Condensed", sans-serif`;
+      ctx.fillText(p.callsign||p.hex, x+14, y+6);
+    }
+  });
+  for (const h of display.keys()) if (!seen.has(h)) display.delete(h);
+}
+
+function loop(){ render(); requestAnimationFrame(loop); }
+
+/* ---------- Discovery: elk vliegtuig brengt een artiest uit zijn land mee ----------
+   1. Het land van het vliegtuig dat binnen je straal komt, is de dj.
+   2. MusicBrainz zoekt artiesten uit dat land in jouw genre.
+   3. iTunes levert een fragment van 30 seconden (geen login nodig).
+   4. Is het fragment op, dan volgt de volgende artiest uit hetzelfde land,
+      tot er een nieuw vliegtuig boven je komt. */
+const GENRES = ['folk', 'rock', 'indie', 'electronic', 'hip hop', 'jazz', 'pop', 'punk', 'metal', 'singer-songwriter', 'reggae', 'blues', 'soul', 'classical'];
+let discGenre = 'folk';
+try { const g = localStorage.getItem('discGenre'); if (GENRES.includes(g)) discGenre = g; } catch(e){}
+let lastLead = null;                 // {iso, country, cs}: het land dat nu draait
+const CAN_VOLUME = (() => { try { const a = new Audio(); a.volume = 0.5; return Math.abs(a.volume - 0.5) < 0.01; } catch(e){ return false; } })();
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+
+/* --- bronnen --- */
+const mbCache = new Map();
+function artistsFor(iso, genre){
+  const key = iso + '|' + genre;
+  if (mbCache.has(key)) return mbCache.get(key);
+  const q = genre ? `country:${iso} AND tag:"${genre}"` : `country:${iso}`;
+  const url = off => `https://musicbrainz.org/ws/2/artist?fmt=json&limit=100&offset=${off}&query=${encodeURIComponent(q)}`;
+  const p = (async () => {
+    const first = await getJSON(url(0));
+    let list = first.artists || [];
+    // soms een willekeurige diepere pagina erbij: meer kans op iets onbekends
+    const pages = Math.min(5, Math.ceil((first.count || 0) / 100));
+    if (pages > 1){
+      const off = 100 * (1 + Math.floor(Math.random() * (pages - 1)));
+      try { list = list.concat((await getJSON(url(off))).artists || []); } catch(e){}
+    }
+    return list.map(a => ({
+      id: a.id, name: a.name, type: a.type || '',
+      tags: (a.tags || []).slice().sort((x, y) => y.count - x.count).map(x => x.name).slice(0, 3),
+      begin: (a['life-span']?.begin || '').slice(0, 4),
+    }));
+  })();
+  p.catch(() => mbCache.delete(key));                 // fout: later opnieuw proberen
+  mbCache.set(key, p);
+  return p;
+}
+const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+async function trackFor(artist, iso){
+  for (const cc of [iso.toLowerCase(), 'us']){
+    let j;
+    try { j = await getJSON(`https://itunes.apple.com/search?entity=song&limit=25&country=${cc}&term=${encodeURIComponent(artist.name)}`); }
+    catch(e){ continue; }
+    const hits = (j.results || []).filter(r => r.previewUrl && norm(r.artistName) === norm(artist.name));
+    if (hits.length){
+      const r = hits[Math.floor(Math.random() * Math.min(hits.length, 8))];
+      return {title: r.trackName, album: r.collectionName || '', art: (r.artworkUrl100 || '').replace('100x100', '300x300'),
+              preview: r.previewUrl, appleUrl: r.trackViewUrl || '', year: (r.releaseDate || '').slice(0, 4)};
+    }
+  }
+  return null;
+}
+async function spotifyFor(artist, track){
+  try {
+    const j = await getJSON(`https://musicbrainz.org/ws/2/artist/${artist.id}?inc=url-rels&fmt=json`);
+    const rel = (j.relations || []).find(r => /open\.spotify\.com\/artist\//.test(r.url?.resource || ''));
+    if (rel){ const u = rel.url.resource; return {url: u, id: u.split('/artist/')[1].split(/[?/#]/)[0]}; }
+  } catch(e){}
+  return {url: `https://open.spotify.com/search/${encodeURIComponent(artist.name + ' ' + track.title)}`, id: null};
+}
+
+const usedArtists = new Set();
+async function discover(iso){
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  // eerst nieuwe artiesten in jouw genre, dan iets anders uit dat land; alles al gehoord? dan mag een artiest terugkomen
+  for (const [genre, fresh] of [[discGenre, true], ['', true], [discGenre, false], ['', false]]){
+    let list = [];
+    try { list = await artistsFor(iso, genre); } catch(e){ continue; }
+    const pool = shuffle(list.filter(a => !fresh || !usedArtists.has(a.id))).slice(0, 8);
+    for (const artist of pool){
+      const track = await trackFor(artist, iso);
+      if (!track) continue;
+      usedArtists.add(artist.id);
+      const spotify = await spotifyFor(artist, track);
+      return {iso, artist, track, spotify, genre, fallback: genre !== discGenre};
+    }
+  }
+  return null;
+}
+const ready = new Map();             // iso -> Promise<ontdekking>: alvast klaargezet
+function prefetch(iso){ if (iso && !ready.has(iso)) ready.set(iso, discover(iso)); }
+function takeNext(iso){ const p = ready.get(iso) || discover(iso); ready.delete(iso); return p; }
+
+/* --- afspelen: twee spelers, zodat nummers in elkaar overvloeien --- */
+const decks = [new Audio(), new Audio()].map(el => { el.preload = 'auto'; return {el, target: 0}; });
+let active = 0, nowDisc = null, playReq = 0, spotifyOpen = false;
+function unlockAudio(){                                 // binnen een tik/klik
+  decks.forEach(d => { if (d.el.paused){ d.el.src = SILENT; d.el.play().then(() => { if (!d.target) d.el.pause(); }).catch(() => {}); } });
+}
+function playDisc(disc){
+  const next = decks[1 - active], prev = decks[active];
+  next.el.src = disc.track.preview;
+  next.el.volume = CAN_VOLUME ? 0 : 1;
+  next.target = 1; prev.target = 0;
+  if (!CAN_VOLUME) prev.el.pause();
+  active = 1 - active;
+  next.el.play().catch(() => { $('play').hidden = false; $('play').textContent = t('tapToStart'); });
+  nowDisc = disc;
+  renderNow();
+  logPlay({kind: 'track', key: disc.track.preview, disc, iso: disc.iso, country: countryName(disc.iso)});
+}
+decks.forEach((d, i) => d.el.addEventListener('ended', () => { if (i === active && soundOn && !spotifyOpen) playNext(); }));
+function fadeStep(){
+  decks.forEach(d => {
+    const want = soundOn && !spotifyOpen ? d.target : 0;
+    if (CAN_VOLUME){
+      const v = d.el.volume + (want - d.el.volume) * 0.3;
+      d.el.volume = Math.min(1, Math.max(0, Math.abs(v - want) < 0.01 ? want : v));
+      if (!want && d.el.volume === 0 && !d.el.paused) d.el.pause();
+    } else if (!want && !d.el.paused) d.el.pause();
+  });
+  const a = decks[active].el;
+  $('nowProg').style.width = a.duration ? `${Math.min(100, a.currentTime / a.duration * 100)}%` : '0';
+}
+
+async function startCountry(lead){
+  const my = ++playReq;
+  setDiscStatus(t('searchingArtist', {g: genreLow(discGenre), c: countryName(lead.iso, lead.country)}));
+  const disc = await takeNext(lead.iso);
+  if (my !== playReq) return;
+  if (!disc){ setDiscStatus(t('noArtistAtAll', {c: countryName(lead.iso, lead.country)})); return; }
+  setDiscStatus(disc.fallback ? t('noArtist', {g: genreLow(discGenre), c: countryName(lead.iso, lead.country)}) : '');
+  playDisc(disc);
+  prefetch(lead.iso);                                   // het volgende nummer alvast klaarzetten
+}
+function playNext(){ if (lastLead) startCountry(lastLead); }
+
+/* --- de dj: wie is er nu aan de beurt? (elke 250 ms) --- */
+function updateMix(){
+  const now = performance.now();
+  let best = null;
+  for (const p of lastPlanes){
+    if (!(p.alt > 0 && p.alt < MAX_ALT_FT)) continue;
+    const tgt = anthemTarget(routeCache.get(p.callsign));
+    if (!tgt?.iso) continue;
+    const st = liveState(p, now);
+    if (st.d <= radiusKm && (!best || st.d < best.d)) best = {iso: tgt.iso.toUpperCase(), country: tgt.country, d: st.d, cs: p.callsign};
+  }
+  if (best && best.iso !== lastLead?.iso){
+    lastLead = best;
+    if (soundOn && !spotifyOpen) startCountry(lastLead);
+  }
+  // het toestel op het bord: alvast een artiest klaarzetten
+  const p = current && lastPlanes.find(x => x.hex === current);
+  const tgt = p && anthemTarget(routeCache.get(p.callsign));
+  const bIso = tgt?.iso?.toUpperCase();
+  if (bIso && soundOn) prefetch(bIso);
+  updateSignTag();
+  renderUpNext(bIso, tgt?.country);
+  fadeStep();
+}
+function updateSignTag(){
+  const tag = $('signTag');
+  const p = current && lastPlanes.find(x => x.hex === current);
+  const tgt = p && anthemTarget(routeCache.get(p.callsign));
+  if (!soundOn || !tgt || spotifyOpen){ tag.hidden = true; return; }
+  const now = tgt.iso?.toUpperCase() === lastLead?.iso;
+  tag.textContent = now ? t('nowPlaying') : t('upNext');
+  tag.classList.toggle('now', now);
+  tag.hidden = false;
+}
+let upNextKey = '';
+function renderUpNext(iso, country){
+  const box = $('upNext');
+  if (!soundOn || !iso || iso === lastLead?.iso || spotifyOpen){ box.hidden = true; upNextKey = ''; return; }
+  const key = iso + '|' + discGenre;
+  if (key === upNextKey) return;
+  upNextKey = key;
+  box.hidden = false;
+  box.textContent = t('upNextFrom', {c: `${flagOf(iso)} ${countryName(iso, country)}`, a: '\u2026'});
+  ready.get(iso)?.then(d => { if (upNextKey === key && d) box.textContent = t('upNextFrom', {c: `${flagOf(iso)} ${countryName(iso, country)}`, a: d.artist.name}); });
+}
+
+/* --- weergave --- */
+const genreName = g => t('g_' + g.replace(/[^a-z]/g, ''));
+const genreLow = g => LANG === 'de' ? genreName(g) : genreName(g).toLowerCase();   // midden in een zin
+function setDiscStatus(msg){ const s = $('discStatus'); s.textContent = msg || ''; s.hidden = !msg; }
+function renderNow(){
+  const d = nowDisc, card = $('nowCard');
+  if (!d){ card.hidden = true; return; }
+  card.hidden = false; $('discIntro').hidden = true;
+  const art = $('nowArt'); art.onerror = () => { art.style.visibility = 'hidden'; };
+  art.style.visibility = d.track.art ? '' : 'hidden'; art.alt = ''; art.src = d.track.art || '';
+  $('nowTitle').textContent = d.track.title;
+  $('nowArtist').textContent = d.artist.name;
+  const meta = [`${flagOf(d.iso)} ${countryName(d.iso)}`, d.artist.tags.join(', '), d.artist.begin ? t('since', {y: d.artist.begin}) : ''].filter(Boolean);
+  $('nowMeta').textContent = meta.join(' \u00b7 ');
+  $('spLink').href = d.spotify.url;
+  $('apLink').href = d.track.appleUrl || `https://music.apple.com/search?term=${encodeURIComponent(d.artist.name)}`;
+  $('spPlay').hidden = !d.spotify.id;
+  renderFavBtn();
+}
+
+/* --- bewaren (in deze browser) --- */
+let favs = [];
+try { favs = JSON.parse(localStorage.getItem('discFavs') || '[]'); } catch(e){ favs = []; }
+const saveFavs = () => { try { localStorage.setItem('discFavs', JSON.stringify(favs)); } catch(e){} };
+const isFav = d => d && favs.some(f => f.preview === d.track.preview);
+function toggleFav(d){
+  if (!d) return;
+  if (isFav(d)) favs = favs.filter(f => f.preview !== d.track.preview);
+  else favs.unshift({preview: d.track.preview, title: d.track.title, artist: d.artist.name, iso: d.iso, art: d.track.art,
+                     appleUrl: d.track.appleUrl, spotifyUrl: d.spotify.url, cs: lastLead?.cs || '', date: new Date().toISOString()});
+  saveFavs(); renderFavBtn(); renderFavs();
+}
+function renderFavBtn(){
+  const b = $('favBtn'), on = isFav(nowDisc);
+  b.textContent = (on ? '\u2665 ' : '\u2661 ') + (on ? t('faved') : t('fav'));
+  b.setAttribute('aria-pressed', on);
+}
+function renderFavs(){
+  const ol = $('favs'); ol.innerHTML = '';
+  $('copyFavs').hidden = !favs.length;
+  if (!favs.length){ ol.append(el('li', 'empty', t('noFinds'))); return; }
+  favs.forEach((f, i) => {
+    const li = el('li', 'fav');
+    const im = el('img'); im.src = f.art || ''; im.alt = ''; im.loading = 'lazy'; im.onerror = () => im.remove();
+    const tx = el('span', 'tx');
+    tx.append(el('b', null, f.title), document.createTextNode(` \u00b7 ${f.artist}`));
+    const when = new Date(f.date).toLocaleDateString(LOCALE, {day: 'numeric', month: 'short'});
+    tx.append(el('small', null, [`${flagOf(f.iso)} ${countryName(f.iso)}`, f.cs ? t('viaFlight', {f: f.cs}) : '', when].filter(Boolean).join(' \u00b7 ')));
+    const links = el('span', 'links');
+    const sp = el('a', null, 'Spotify'); sp.href = f.spotifyUrl; sp.target = '_blank'; sp.rel = 'noopener';
+    const ap = el('a', null, 'Apple'); ap.href = f.appleUrl || '#'; ap.target = '_blank'; ap.rel = 'noopener';
+    const rm = el('button', 'rm', '\u00d7'); rm.type = 'button'; rm.title = t('remove'); rm.setAttribute('aria-label', t('remove'));
+    rm.onclick = () => { favs.splice(i, 1); saveFavs(); renderFavs(); renderFavBtn(); };
+    links.append(sp, ap, rm);
+    li.append(im, tx, links);
+    ol.append(li);
+  });
+}
+
+/* --- Spotify-speler (zonder login: een fragment; ingelogd op Spotify: alles) --- */
+function openSpotify(){
+  const d = nowDisc; if (!d?.spotify.id) return;
+  spotifyOpen = true;
+  const box = $('spEmbed'); box.innerHTML = '';
+  const f = document.createElement('iframe');
+  f.src = `https://open.spotify.com/embed/artist/${d.spotify.id}`;
+  f.width = '100%'; f.height = '352'; f.loading = 'lazy';
+  f.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+  f.title = d.artist.name;
+  box.append(f); box.hidden = false;
+  $('backLive').hidden = false;
+}
+function backToLive(){
+  spotifyOpen = false;
+  $('spEmbed').innerHTML = ''; $('spEmbed').hidden = true;
+  $('backLive').hidden = true;
+  if (soundOn){ const a = decks[active]; a.target = 1; a.el.play().catch(() => {}); }
+}
+
+function setDiscGenre(g){
+  if (!GENRES.includes(g)) return;
+  discGenre = g; $('genre').value = g;
+  try { localStorage.setItem('discGenre', g); } catch(e){}
+  ready.clear(); upNextKey = '';
+  if (soundOn && lastLead && !spotifyOpen) startCountry(lastLead);
+}
+function boardLead(){                                   // het land van het toestel op het bord
+  const p = current && lastPlanes.find(x => x.hex === current);
+  const tgt = p && anthemTarget(routeCache.get(p.callsign));
+  return tgt?.iso ? {iso: tgt.iso.toUpperCase(), country: tgt.country, cs: p.callsign} : null;
+}
+
+$('greetPlay').onclick = speakGreeting;
+if (window.speechSynthesis) speechSynthesis.getVoices();   // stemmen alvast laden
+
+$('backLive').onclick = backToLive;
+$('playlist').addEventListener('click', ev => {
+  const b = ev.target.closest('.pl-play'); if (!b) return;
+  const e = playLog.find(x => x.id === +b.dataset.id);
+  if (!e?.disc) return;
+  if (spotifyOpen) backToLive();
+  if (!soundOn){ soundOn = true; $('start').textContent = t('soundOff'); unlockAudio(); if (!timer) startPolling(); }
+  playReq++; setDiscStatus('');
+  playDisc(e.disc); renderPlaylist();
+});
+GENRES.forEach(g => $('genre').add(new Option(genreName(g), g)));
+$('genre').value = discGenre;
+$('genre').onchange = e => setDiscGenre(e.target.value);
+$('favBtn').onclick = () => toggleFav(nowDisc);
+$('nextBtn').onclick = () => { if (spotifyOpen) backToLive(); if (lastLead) playNext(); };
+$('spPlay').onclick = openSpotify;
+$('copyFavs').onclick = () => {
+  const txt = favs.map(f => `${f.artist} \u2013 ${f.title}`).join('\n');
+  navigator.clipboard?.writeText(txt).then(() => {
+    const b = $('copyFavs'); b.textContent = t('copied');
+    setTimeout(() => { b.textContent = t('copyList'); }, 1800);
+  }).catch(() => {});
+};
+renderFavs();
+initTabs();
+
+applyI18n();
+document.querySelector('.langs').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b && b.dataset.lang !== LANG) setLang(b.dataset.lang); });
+
+/* ---------- Go ---------- */
+requestAnimationFrame(loop);
+loadBigMac();
+loadRates();
+useGps();   // standaard: mijn locatie (valt terug op Polderbaan)
+</script>
+</body>
+</html>
