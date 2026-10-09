@@ -16,7 +16,6 @@ $allowed = [
     'rss.marketingtools.apple.com' => 3600, // hitlijsten per land (Apple Music)
     'musicbrainz.org'            => 86400,  // artiesten per land en genre, Spotify-links
     'itunes.apple.com'           => 86400,  // fragmenten van 30 seconden
-    'www.googleapis.com'         => 604800, // YouTube-zoekopdrachten (alleen /youtube/v3/search), 1 week
     'overpass-api.de'            => 86400,  // plaatsnamen op de radar (OpenStreetMap)
 ];
 
@@ -39,28 +38,7 @@ if ($host === 'raw.githubusercontent.com' && strpos($p['path'] ?? '', '/TheEcono
     exit;
 }
 
-// YouTube alleen voor zoeken. De API-sleutel staat op de server, buiten de webmap en buiten de repo:
-// /home/fodis/.discovery-youtube-key (alleen de sleutel, op één regel).
 $fetchUrl = $url;
-if ($host === 'www.googleapis.com') {
-    if (strpos($p['path'] ?? '', '/youtube/v3/search') !== 0) {
-        http_response_code(400);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['error' => 'URL niet toegestaan']);
-        exit;
-    }
-    $key = '';
-    foreach (['/home/fodis/.discovery-youtube-key', dirname(__DIR__, 2) . '/.discovery-youtube-key', dirname(__DIR__, 4) . '/.discovery-youtube-key'] as $f) {
-        if (@is_readable($f)) { $key = trim((string)file_get_contents($f)); if ($key !== '') break; }
-    }
-    if ($key === '') {
-        http_response_code(503);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['error' => 'geen YouTube-sleutel op de server']);
-        exit;
-    }
-    $fetchUrl = $url . '&key=' . rawurlencode($key);
-}
 
 $isCsv = ($host === 'raw.githubusercontent.com');
 header($isCsv ? 'Content-Type: text/csv; charset=utf-8' : 'Content-Type: application/json; charset=utf-8');
@@ -125,9 +103,4 @@ if ($age < $staleLimit) {
 http_response_code(502);
 header('Content-Type: application/json; charset=utf-8');
 $out = ['error' => $err ?: "Bron gaf HTTP $code"];
-// YouTube: de reden doorgeven (bijv. quotaExceeded), zodat de app kan zeggen wat er aan de hand is
-if ($host === 'www.googleapis.com' && is_string($body)) {
-    $g = json_decode($body, true);
-    if (!empty($g['error']['errors'][0]['reason'])) $out['reason'] = $g['error']['errors'][0]['reason'];
-}
 echo json_encode($out);

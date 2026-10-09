@@ -204,7 +204,8 @@
   .now-prog div{height:100%;width:0;background:var(--sign-yellow);transition:width .25s linear}
   .now-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
   .now-actions a.btn{text-decoration:none;display:inline-flex;align-items:center}
-  .years{margin:0 0 12px}
+  .years,.fame{margin:0 0 12px}
+  .fame input{width:100%;accent-color:var(--sign-yellow)}
   .years-head{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:.9rem}
   .years-head output{color:var(--runway-white);font-variant-numeric:tabular-nums}
   .dual{position:relative;height:34px}
@@ -217,11 +218,14 @@
   .dual input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:24px;height:24px;border-radius:50%;background:var(--sign-yellow);border:3px solid #000;cursor:pointer}
   .dual input::-moz-range-thumb{pointer-events:auto;width:20px;height:20px;border-radius:50%;background:var(--sign-yellow);border:3px solid #000;cursor:pointer}
   .dual input:focus-visible::-webkit-slider-thumb{outline:2px solid #fff;outline-offset:2px}
-  .now-card.video{grid-template-columns:minmax(0,1fr)}
-  .now-card.video #nowArt{display:none}
-  .yt-wrap{grid-column:1/-1;aspect-ratio:16/9;background:#111;border-radius:4px;overflow:hidden}
-  .yt-wrap iframe{width:100%;height:100%;display:block;border:0}
-  .yt-note{margin:-6px 0 14px;font-size:.85rem;color:var(--muted)}
+  .player-wrap{grid-column:1/-1;border-radius:6px;overflow:hidden}
+  .now-card.embed{grid-template-columns:minmax(0,1fr)}
+  .now-card.embed #nowArt{display:none}
+  #scWrap iframe{width:100%;height:166px;border:0;display:block}
+  #spWrap iframe{border:0;display:block}
+  .play-note{margin:-6px 0 14px;font-size:.85rem;color:var(--muted)}
+  .check{display:flex;gap:8px;align-items:flex-start;margin:0 0 12px;font-size:.9rem;color:var(--muted);cursor:pointer}
+  .check input{margin-top:3px;accent-color:var(--sign-yellow);width:18px;height:18px}
   .sp-embed{margin:0 0 14px}
   .sp-embed iframe{border:0;border-radius:12px;display:block}
   .up-next{margin:0 0 14px;font-size:.9rem;color:var(--muted)}
@@ -345,6 +349,11 @@
           <label for="genre" data-i18n="iDiscover">Ik ontdek graag:</label>
           <select id="genre" data-i18n-attr="aria-label:genreAria"></select>
         </div>
+        <label class="check"><input type="checkbox" id="haveSp"> <span data-i18n="haveSpotify">Ik heb Spotify: speel hele nummers via mijn account (log in op open.spotify.com in deze browser)</span></label>
+        <div class="fame">
+          <div class="years-head"><span data-i18n="fameLabel">Hoe bekend?</span><output id="fameVal"></output></div>
+          <input type="range" id="fame" min="0" max="4" step="1" data-i18n-attr="aria-label:fameLabel">
+        </div>
         <div class="years">
           <div class="years-head"><span data-i18n="years">Uit de periode</span><output id="yearsVal"></output></div>
           <div class="dual">
@@ -356,7 +365,8 @@
         <p class="disc-intro" id="discIntro" data-i18n="discIntro"></p>
         <p class="disc-status" id="discStatus" aria-live="polite" hidden></p>
         <div class="now-card" id="nowCard" hidden>
-          <div class="yt-wrap" id="ytWrap" hidden><div id="ytPlayer"></div></div>
+          <div class="player-wrap" id="scWrap" hidden></div>
+          <div class="player-wrap" id="spWrap" hidden><div id="spCtl"></div></div>
           <img id="nowArt" alt="">
           <div class="now-info">
             <small data-i18n="nowDiscovered">Nu ontdekt</small>
@@ -371,12 +381,12 @@
             <button class="btn primary" id="spPlay" type="button" hidden data-i18n="spotifyFull">Luister verder in Spotify</button>
             <a class="btn" id="spLink" target="_blank" rel="noopener">Spotify &#8599;</a>
             <a class="btn" id="apLink" target="_blank" rel="noopener">Apple Music &#8599;</a>
-            <a class="btn" id="ytLink" target="_blank" rel="noopener" hidden>YouTube &#8599;</a>
+            <a class="btn" id="scLink" target="_blank" rel="noopener" hidden>SoundCloud &#8599;</a>
           </div>
         </div>
         <button class="btn primary" id="play" type="button" hidden></button>
         <button class="btn primary back-live" id="backLive" type="button" hidden>&#9664; <span data-i18n="backLive">Terug naar live</span> <small data-i18n="backLiveSub">DJ Vliegtuig neemt het weer over</small></button>
-        <p class="yt-note" id="ytNote" hidden></p>
+        <p class="play-note" id="playNote" hidden></p>
         <div class="sp-embed" id="spEmbed" hidden></div>
         <p class="up-next" id="upNext" hidden></p>
         <h2 data-i18n="playlist">Speellijst</h2>
@@ -459,7 +469,7 @@ const I18N = {
     g_reggae:'Reggae',
     g_blues:'Blues',
     g_soul:'Soul',
-    discIntro:'Zet geluid aan. Elk vliegtuig dat over je heen komt, brengt een artiest uit zijn land mee in jouw genre. Je hoort het hele nummer via YouTube, daarna de volgende artiest uit dat land, tot er een nieuw vliegtuig komt.',
+    discIntro:'Zet geluid aan. Elk vliegtuig dat over je heen komt, brengt een artiest uit zijn land mee in jouw genre: hele nummers via SoundCloud of je Spotify, anders een fragment. Daarna de volgende artiest uit dat land, tot er een nieuw vliegtuig komt.',
     nowDiscovered:'Nu ontdekt',
     fav:'Bewaar',
     faved:'Bewaard',
@@ -479,8 +489,7 @@ const I18N = {
     replay:'Speel {s} nog eens',
     playlistEmpty:'Nog niets ontdekt. Zet het geluid aan.',
     backLiveSub:'de vliegtuigen kiezen weer',
-    srcNote:'Artiesten: MusicBrainz \u00b7 nummers: YouTube, fragmenten: Apple Music \u00b7 bewaarde nummers staan alleen in deze browser.',
-    tapVideo:'Tik op de video voor het hele nummer. Tot die tijd hoor je een fragment.',
+    srcNote:'Artiesten: Wikidata en MusicBrainz \u00b7 muziek: SoundCloud, Spotify, fragmenten van Apple Music \u00b7 bewaarde nummers staan alleen in deze browser.',
     appsNav:'DJ VLIEGTUIG-apps',
     tagRadio:'Vlieg mee met DJ VLIEGTUIG - Radio from all over the place',
     tagDiscover:'Stap in bij DJ VLIEGTUIG en ontdek de muziek van de wereld',
@@ -507,9 +516,17 @@ const I18N = {
     mailIntro:'Deze muziek ontdekte ik met de vliegtuigen boven me:',
     mailMore:'\u2026 en nog {n} nummers.',
     copyIntro:'Deze muziek ontdekte ik met DJ VLIEGTUIG DISCOVERY:',
-    ytQuota:'YouTube-limiet voor vandaag bereikt: je hoort fragmenten van 30 seconden. Morgen (rond 9:00) weer hele nummers.',
-    ytNoKey:'Geen YouTube-sleutel op de server: je hoort fragmenten van 30 seconden.',
-    ytDown:'YouTube is even niet bereikbaar: je hoort fragmenten van 30 seconden.',
+    haveSpotify:'Ik heb Spotify: speel hele nummers via mijn account (log in op open.spotify.com in deze browser)',
+    spLogin:'Je hoort fragmenten: log in op open.spotify.com in deze browser voor hele nummers.',
+    spTop:'Populairste nummers',
+    tapPlayer:'De speler startte niet vanzelf: je hoort een fragment. Tik op \u25b6 in de speler voor het hele nummer.',
+    onLabel:'label: {l}',
+    fameLabel:'Hoe bekend?',
+    fame0:'alles, ook heel onbekend',
+    fame1:'met een Wikipedia-pagina',
+    fame2:'redelijk bekend',
+    fame3:'bekend',
+    fame4:'alleen grote namen',
   },
   en: {
     pickSpot:'Choose a spot or airport', useGps:'Use my location', soundOn:'Start sound', soundOff:'Sound off',
@@ -562,7 +579,7 @@ const I18N = {
     g_reggae:'Reggae',
     g_blues:'Blues',
     g_soul:'Soul',
-    discIntro:'Turn on the sound. Every plane that passes over you brings an artist from its country in your genre. You hear the full track via YouTube, then the next artist from that country, until a new plane arrives.',
+    discIntro:'Turn on the sound. Every plane that passes over you brings an artist from its country in your genre: full tracks via SoundCloud or your Spotify, otherwise a clip. Then the next artist from that country, until a new plane arrives.',
     nowDiscovered:'Now discovered',
     fav:'Save',
     faved:'Saved',
@@ -582,8 +599,7 @@ const I18N = {
     replay:'Play {s} again',
     playlistEmpty:'Nothing discovered yet. Turn on the sound.',
     backLiveSub:'the planes choose again',
-    srcNote:'Artists: MusicBrainz \u00b7 tracks: YouTube, clips: Apple Music \u00b7 saved tracks stay in this browser only.',
-    tapVideo:'Tap the video for the full track. Until then you hear a clip.',
+    srcNote:'Artists: Wikidata and MusicBrainz \u00b7 music: SoundCloud, Spotify, clips from Apple Music \u00b7 saved tracks stay in this browser only.',
     appsNav:'DJ VLIEGTUIG apps',
     tagRadio:'Fly along with DJ VLIEGTUIG - Radio from all over the place',
     tagDiscover:'Step aboard DJ VLIEGTUIG and discover the music of the world',
@@ -610,9 +626,17 @@ const I18N = {
     mailIntro:'I discovered this music with the planes flying over me:',
     mailMore:'\u2026 and {n} more tracks.',
     copyIntro:'I discovered this music with DJ VLIEGTUIG DISCOVERY:',
-    ytQuota:'YouTube limit reached for today: you hear 30-second clips. Full tracks again tomorrow (around 9:00 CET).',
-    ytNoKey:'No YouTube key on the server: you hear 30-second clips.',
-    ytDown:'YouTube is unavailable for a moment: you hear 30-second clips.',
+    haveSpotify:'I have Spotify: play full tracks through my account (log in at open.spotify.com in this browser)',
+    spLogin:'You hear clips: log in at open.spotify.com in this browser for full tracks.',
+    spTop:'Top tracks',
+    tapPlayer:'The player did not start by itself: you hear a clip. Tap \u25b6 in the player for the full track.',
+    onLabel:'label: {l}',
+    fameLabel:'How well known?',
+    fame0:'everything, even very obscure',
+    fame1:'with a Wikipedia page',
+    fame2:'fairly known',
+    fame3:'well known',
+    fame4:'only big names',
   },
   de: {
     pickSpot:'Ort oder Flughafen w\u00e4hlen', useGps:'Meinen Standort verwenden', soundOn:'Ton starten', soundOff:'Ton aus',
@@ -665,7 +689,7 @@ const I18N = {
     g_reggae:'Reggae',
     g_blues:'Blues',
     g_soul:'Soul',
-    discIntro:'Schalte den Ton ein. Jedes Flugzeug, das \u00fcber dich fliegt, bringt einen K\u00fcnstler aus seinem Land in deinem Genre mit. Du h\u00f6rst den ganzen Titel \u00fcber YouTube, dann den n\u00e4chsten K\u00fcnstler aus diesem Land, bis ein neues Flugzeug kommt.',
+    discIntro:'Schalte den Ton ein. Jedes Flugzeug, das \u00fcber dich fliegt, bringt einen K\u00fcnstler aus seinem Land in deinem Genre mit: ganze Titel \u00fcber SoundCloud oder dein Spotify, sonst ein Ausschnitt. Danach der n\u00e4chste K\u00fcnstler aus diesem Land, bis ein neues Flugzeug kommt.',
     nowDiscovered:'Gerade entdeckt',
     fav:'Merken',
     faved:'Gemerkt',
@@ -685,8 +709,7 @@ const I18N = {
     replay:'{s} noch einmal spielen',
     playlistEmpty:'Noch nichts entdeckt. Schalte den Ton ein.',
     backLiveSub:'die Flugzeuge w\u00e4hlen wieder',
-    srcNote:'K\u00fcnstler: MusicBrainz \u00b7 Titel: YouTube, Ausschnitte: Apple Music \u00b7 gemerkte Titel bleiben nur in diesem Browser.',
-    tapVideo:'Tippe auf das Video f\u00fcr den ganzen Titel. Bis dahin h\u00f6rst du einen Ausschnitt.',
+    srcNote:'K\u00fcnstler: Wikidata und MusicBrainz \u00b7 Musik: SoundCloud, Spotify, Ausschnitte von Apple Music \u00b7 gemerkte Titel bleiben nur in diesem Browser.',
     appsNav:'DJ VLIEGTUIG-Apps',
     tagRadio:'Flieg mit DJ VLIEGTUIG - Radio von \u00fcberall her',
     tagDiscover:'Steig ein bei DJ VLIEGTUIG und entdecke die Musik der Welt',
@@ -713,9 +736,17 @@ const I18N = {
     mailIntro:'Diese Musik habe ich mit den Flugzeugen \u00fcber mir entdeckt:',
     mailMore:'\u2026 und {n} weitere Titel.',
     copyIntro:'Diese Musik habe ich mit DJ VLIEGTUIG DISCOVERY entdeckt:',
-    ytQuota:'YouTube-Limit f\u00fcr heute erreicht: du h\u00f6rst 30-Sekunden-Ausschnitte. Morgen (gegen 9:00) wieder ganze Titel.',
-    ytNoKey:'Kein YouTube-Schl\u00fcssel auf dem Server: du h\u00f6rst 30-Sekunden-Ausschnitte.',
-    ytDown:'YouTube ist gerade nicht erreichbar: du h\u00f6rst 30-Sekunden-Ausschnitte.',
+    haveSpotify:'Ich habe Spotify: ganze Titel \u00fcber mein Konto abspielen (in diesem Browser bei open.spotify.com anmelden)',
+    spLogin:'Du h\u00f6rst Ausschnitte: Melde dich in diesem Browser bei open.spotify.com an f\u00fcr ganze Titel.',
+    spTop:'Beliebteste Titel',
+    tapPlayer:'Der Player ist nicht von selbst gestartet: Du h\u00f6rst einen Ausschnitt. Tippe im Player auf \u25b6 f\u00fcr den ganzen Titel.',
+    onLabel:'Label: {l}',
+    fameLabel:'Wie bekannt?',
+    fame0:'alles, auch sehr unbekannt',
+    fame1:'mit Wikipedia-Seite',
+    fame2:'einigerma\u00dfen bekannt',
+    fame3:'bekannt',
+    fame4:'nur gro\u00dfe Namen',
   },
 };
 const LANGS = ['nl', 'en', 'de'];
@@ -868,7 +899,7 @@ $('start').onclick = () => {
   } else {
     if (spotifyOpen) backToLive();
     playReq++; decks.forEach(d => { d.target = 0; d.el.pause(); });
-    ytTarget = 0; ytPending = null; clearTimeout(ytWatch); try { yt?.pauseVideo(); } catch(e){}
+    clearTimeout(engineWatch); sc.target = 0; try { sc.widget?.pause(); sp.ctl?.pause(); } catch(e){}
     setDiscStatus('');
   }
   if (!timer) startPolling();
@@ -2088,6 +2119,12 @@ const yearsText = () => `${yearFrom}\u2013${yearTo}`;
 const yearsNote = () => yearFrom === YEAR_MIN && yearTo === YEAR_MAX ? '' : ` (${yearsText()})`;   // alleen tonen als je de periode inperkt
 // artiest actief in de gekozen periode? (begonnen voor het einde, niet gestopt voor het begin)
 const fitsYears = a => !(a.begin && +a.begin > yearTo) && !(a.end && +a.end < yearFrom);
+// Bekendheid: aantal Wikipedia-talen van de artiest (alleen voor Wikidata-artiesten)
+const FAME_STEPS = [0, 1, 3, 8, 20];                  // minimaal aantal talen per stand
+let fame = 1;
+try { const v = localStorage.getItem('discFame'); if (v !== null && +v >= 0 && +v < FAME_STEPS.length) fame = +v; } catch(e){}
+{ const f = SHARED.get('fame'); if (f !== null && +f >= 0 && +f < FAME_STEPS.length) fame = +f; }
+const fitsFame = a => (a.links || 0) >= FAME_STEPS[fame];
 const noMusic = new Set();           // land|genre|jaren waar niets te vinden was
 let lastLead = null;                 // {iso, country, cs}: het land dat nu draait
 const CAN_VOLUME = (() => { try { const a = new Audio(); a.volume = 0.5; return Math.abs(a.volume - 0.5) < 0.01; } catch(e){ return false; } })();
@@ -2136,81 +2173,54 @@ async function trackFor(artist, iso){
   }
   return null;
 }
-async function spotifyFor(artist, track){             // ook: het YouTube-kanaal van de artiest
-  let sp = null, channel = null, qid = null;
+async function spotifyFor(artist, track){             // links van MusicBrainz: Spotify en SoundCloud
+  let sp = null, sc = '';
   try {
     const j = await getJSON(`https://musicbrainz.org/ws/2/artist/${artist.id}?inc=url-rels&fmt=json`);
     for (const r of j.relations || []){
       const u = r.url?.resource || '';
       if (!sp && /open\.spotify\.com\/artist\//.test(u)) sp = {url: u, id: u.split('/artist/')[1].split(/[?/#]/)[0]};
-      const m = u.match(/youtube\.com\/channel\/(UC[\w-]{22})/); if (m && !channel) channel = m[1];
-      const w = u.match(/wikidata\.org\/wiki\/(Q\d+)/); if (w) qid = w[1];
+      const m = u.match(/^https?:\/\/(?:www\.)?soundcloud\.com\/([\w-]+)\/?$/); if (m && !sc) sc = m[1];
     }
   } catch(e){}
-  if (!channel && qid){
-    try {
-      const rows = (await getJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(`SELECT ?c WHERE { wd:${qid} wdt:P2397 ?c }`))).results.bindings;
-      const c = rows.map(x => x.c.value).find(v => /^UC[\w-]{22}$/.test(v)); if (c) channel = c;
-    } catch(e){}
-  }
-  return {...(sp || {url: `https://open.spotify.com/search/${encodeURIComponent(artist.name + ' ' + track.title)}`, id: null}), channel};
+  return {...(sp || {url: `https://open.spotify.com/search/${encodeURIComponent(artist.name + ' ' + track.title)}`, id: null}), sc};
 }
-
-/* --- YouTube: het hele nummer (zoeken via de proxy, die de API-sleutel toevoegt) --- */
-let ytOffUntil = 0;
-let ytQuotaDay = '';                  // dag (Amerikaanse tijd) waarop het YouTube-quotum op was
-const ytDay = () => new Date(Date.now() - 7 * 3600e3).toISOString().slice(0, 10);   // quotum gaat om middernacht Pacific opnieuw in
-async function youtubeFor(artist, track){
-  if (Date.now() < ytOffUntil || ytQuotaDay === ytDay()) return null;
-  const q = `${artist.name} ${track.title}`;
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&videoCategoryId=10&maxResults=5&q=${encodeURIComponent(q)}`;
-  try {
-    const r = await fetch(`proxy.php?url=${encodeURIComponent(url)}`, {cache: 'no-store'});
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok){
-      if (/quota/i.test(j.reason || '')){ ytQuotaDay = ytDay(); ytNote = 'ytQuota'; }
-      else { ytOffUntil = Date.now() + 10 * 60 * 1000; ytNote = r.status === 503 ? 'ytNoKey' : 'ytDown'; }
-      return null;
-    }
-    ytNote = '';
-    const items = (j.items || []).filter(i => i.id?.videoId);
-    const T = norm(track.title), A = norm(artist.name);
-    const txt = i => norm(i.snippet?.title) + ' ' + norm(i.snippet?.channelTitle);
-    const hit = items.find(i => txt(i).includes(T) && txt(i).includes(A)) || items.find(i => txt(i).includes(T));
-    return hit ? hit.id.videoId : null;
-  } catch(e){
-    ytOffUntil = Date.now() + 10 * 60 * 1000; ytNote = 'ytDown';   // even alleen fragmenten
-    return null;
-  }
-}
-let ytNote = '';                      // waarom er geen hele nummers zijn (melding onder de kaart)
-
-/* --- Wikidata: artiesten met een eigen YouTube-kanaal (P2397), dus gegarandeerd hele nummers ---
-   Genre via P136 en alle subgenres (P279*), land via P495 (herkomst) of P27 (nationaliteit). */
+/* --- Wikidata: bekende artiesten (met Wikipedia-pagina's) uit land X in genre Y die
+   officieel te beluisteren zijn: een SoundCloud-account (P3040) of Spotify-artiest (P1902).
+   Genre via P136 en alle subgenres (P279*), land via P495 (herkomst) of P27 (nationaliteit).
+   Ook het platenlabel (P264) en het aantal Wikipedia-talen (bekendheid). --- */
 const wdCache = new Map();
 function wdArtists(iso, genre){
   const key = iso + '|' + genre;
   if (wdCache.has(key)) return wdCache.get(key);
   const labels = [genre, genre + ' music'].map(x => JSON.stringify(x)).join(', ');
-  const q = `SELECT DISTINCT ?a ?name ?ch ?sp ?start ?end WHERE {
+  const q = `SELECT DISTINCT ?a ?name ?sc ?sp ?labName ?links ?start ?end WHERE {
   ?country wdt:P297 "${iso}" .
   ?root wdt:P31 wd:Q188451 ; rdfs:label|skos:altLabel ?l .
   FILTER(LANG(?l) = "en" && LCASE(STR(?l)) IN (${labels}))
   ?g wdt:P279* ?root .
-  ?a wdt:P136 ?g ; wdt:P2397 ?ch .
+  ?a wdt:P136 ?g .
   { ?a wdt:P495 ?country } UNION { ?a wdt:P27 ?country }
+  OPTIONAL { ?a wdt:P3040 ?sc }
   OPTIONAL { ?a wdt:P1902 ?sp }
+  FILTER(BOUND(?sc) || BOUND(?sp))
+  ?a wikibase:sitelinks ?links .
+  OPTIONAL { ?a wdt:P264 ?lab }
   OPTIONAL { ?a wdt:P571|wdt:P2031 ?start }
   OPTIONAL { ?a wdt:P576|wdt:P2032 ?end }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,mul,${iso.toLowerCase()},de,fr,es,it,nl". ?a rdfs:label ?name . }
-} LIMIT 800`;
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,mul,${iso.toLowerCase()},de,fr,es,it,nl". ?a rdfs:label ?name . ?lab rdfs:label ?labName . }
+} LIMIT 1000`;
   const p = getJSON('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(q)).then(j => {
     const seen = new Map();
     for (const r of j.results?.bindings || []){
-      const id = r.a.value.split('/').pop(), ch = r.ch?.value || '';
-      if (seen.has(id) || !/^UC[\w-]{22}$/.test(ch) || /^Q\d+$/.test(r.name?.value || '')) continue;
-      seen.set(id, {id: 'wd:' + id, name: r.name.value, type: '', tags: [genre], channel: ch, sp: r.sp?.value || '',
-                    begin: (r.start?.value || '').slice(0, 4), end: (r.end?.value || '').slice(0, 4)});
+      const id = r.a.value.split('/').pop(), name = r.name?.value || '';
+      if (!name || /^Q\d+$/.test(name)) continue;
+      const a = seen.get(id) || {id: 'wd:' + id, name, type: '', tags: [genre], sc: '', sp: '', label: '', links: +(r.links?.value || 0),
+                                 begin: (r.start?.value || '').slice(0, 4), end: (r.end?.value || '').slice(0, 4)};
+      if (!a.sc && r.sc) a.sc = r.sc.value;
+      if (!a.sp && r.sp) a.sp = r.sp.value;
+      if (!a.label && r.labName && !/^Q\d+$/.test(r.labName.value)) a.label = r.labName.value;
+      seen.set(id, a);
     }
     return [...seen.values()];
   });
@@ -2225,17 +2235,20 @@ async function discover(iso){
   const chain = genreChain(discGenre);
   // eerst nieuwe artiesten in jouw genre, dan in het bovenliggende genre; alles al gehoord? dan mag een artiest terugkomen
   for (const fresh of [true, false]) for (const genre of chain){
-    // a. artiest met eigen YouTube-kanaal (Wikidata)
+    // a. bekende artiest die officieel te beluisteren is (Wikidata); bij "Ik heb Spotify" eentje met Spotify
     let wd = [];
     try { wd = await wdArtists(iso, genre); } catch(e){}
-    const pick = shuffle(wd.filter(a => fitsYears(a) && (!fresh || !usedArtists.has(a.id))))[0];
+    const ok = a => fitsYears(a) && fitsFame(a) && (!fresh || !usedArtists.has(a.id)) && (haveSpotify ? a.sp || a.sc : a.sc || a.sp);
+    const cands = shuffle(wd.filter(ok));
+    const pick = cands.find(a => haveSpotify ? a.sp : a.sc) || cands[0];
     if (pick){
       usedArtists.add(pick.id);
-      return {iso, artist: pick, track: {title: pick.name, album: '', art: '', preview: null, appleUrl: '', year: ''},
+      return {iso, artist: pick, track: {title: '', album: '', art: '', preview: null, appleUrl: '', year: ''},
               spotify: pick.sp ? {url: `https://open.spotify.com/artist/${pick.sp}`, id: pick.sp} : {url: `https://open.spotify.com/search/${encodeURIComponent(pick.name)}`, id: null},
-              list: 'UU' + pick.channel.slice(2), yt: null, genre, fallback: genre !== discGenre};
+              sc: pick.sc, genre, fallback: genre !== discGenre};
     }
-    // b. MusicBrainz + iTunes (kanaal niet zeker)
+    // b. MusicBrainz + iTunes: ook onbekende artiesten, dus alleen bij de laagste twee standen van 'Hoe bekend?'
+    if (fame > 1) continue;
     let list = [];
     try { list = await artistsFor(iso, genre); } catch(e){ continue; }
     const pool = shuffle(list.filter(a => fitsGenre(a, genre) && fitsYears(a) && (!fresh || !usedArtists.has(a.id)))).slice(0, 10);
@@ -2244,12 +2257,10 @@ async function discover(iso){
       if (!track) continue;
       usedArtists.add(artist.id);
       const spotify = await spotifyFor(artist, track);
-      // eigen YouTube-kanaal: speel de uploads af (geen API-sleutel, geen quotum). Anders bij afspelen zoeken.
-      const list = spotify.channel ? 'UU' + spotify.channel.slice(2) : null;
-      return {iso, artist, track, spotify, list, yt: list ? null : undefined, genre, fallback: genre !== discGenre};
+      return {iso, artist, track, spotify, sc: spotify.sc, genre, fallback: genre !== discGenre};
     }
   }
-  noMusic.add(`${iso}|${discGenre}|${yearsText()}`);
+  noMusic.add(`${iso}|${discGenre}|${yearsText()}|${fame}`);
   return null;
 }
 const ready = new Map();             // iso -> Promise<ontdekking>: alvast klaargezet
@@ -2262,50 +2273,66 @@ let active = 0, nowDisc = null, playReq = 0, spotifyOpen = false;
 function unlockAudio(){                                 // binnen een tik/klik
   decks.forEach(d => { if (d.el.paused){ d.el.src = SILENT; d.el.play().then(() => { if (!d.target) d.el.pause(); }).catch(() => {}); } });
 }
-/* YouTube-speler: hele nummers. Lukt dat niet (geen video, geblokkeerd, of de browser
-   wil niet automatisch starten), dan speelt het iTunes-fragment via de audiospelers. */
-let yt = null, ytBoot = null, ytVol = 0, ytTarget = 0, ytPending = null, ytWatch = 0, mode = 'audio';
-function ensurePlayer(){
-  if (yt) return Promise.resolve(yt);
-  if (ytBoot) return ytBoot;
-  ytBoot = new Promise((res, rej) => {
-    const make = () => {
-      const p = new YT.Player('ytPlayer', {width: '100%', height: '100%',
-        playerVars: {autoplay: 0, playsinline: 1, rel: 0, modestbranding: 1},
-        events: {onReady: () => { yt = p; res(p); }, onStateChange: ev => ytState(ev.data), onError: ytFailed}});
-    };
-    if (window.YT?.Player) return make();
-    window.onYouTubeIframeAPIReady = make;
-    const sc = document.createElement('script');
-    sc.src = 'https://www.youtube.com/iframe_api';
-    sc.onerror = () => { ytBoot = null; rej(new Error('YouTube niet bereikbaar')); };
-    document.head.append(sc);
-    setTimeout(() => rej(new Error('YouTube te traag')), 10000);
-  });
-  return ytBoot;
+/* Drie spelers, alleen geluid:
+   - 'sp': Spotify (iFrame API). Wie in deze browser bij Spotify is ingelogd, hoort hele nummers. Alleen bij "Ik heb Spotify".
+   - 'sc': SoundCloud-widget. Hele nummers zonder login, van het officiele account van de artiest.
+   - 'audio': het iTunes-fragment van 30 s (reserve), met crossfades.
+   Lukt een speler niet (fout, of start niet binnen 7 s: bijv. iPhone), dan de volgende. */
+let mode = 'audio', engineWatch = 0, playNote = '';
+let haveSpotify = false;
+try { haveSpotify = localStorage.getItem('discSpotify') === '1'; } catch(e){}
+const loadScript = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.append(el); });
+function enginesFor(d){
+  const list = [];
+  if (haveSpotify && d.spotify.id) list.push('sp');
+  if (d.sc) list.push('sc');
+  list.push('audio');
+  return list;
 }
 async function playDisc(disc){
   nowDisc = disc;
-  if (!disc.list && disc.yt === undefined){            // geen kanaal: YouTube pas nu zoeken (spaart het dagquotum)
-    disc.yt = null;
-    disc.yt = await youtubeFor(disc.artist, disc.track);
-    if (nowDisc !== disc) return;
-  }
+  disc.engines = enginesFor(disc);
+  disc.ending = false;
   renderNow();
-  logPlay({kind: 'track', key: disc.list || disc.track.preview, disc, iso: disc.iso, country: countryName(disc.iso)});
-  $('ytNote').textContent = !ytSrc(disc) && ytNote ? t(ytNote) : '';
-  $('ytNote').hidden = !$('ytNote').textContent;
-  if (ytSrc(disc)) playYT(disc); else playAudio(disc);
+  logPlay({kind: 'track', key: disc.sc || disc.spotify.id || disc.track.preview, disc, iso: disc.iso, country: countryName(disc.iso)});
+  nextEngine(disc);
 }
-// wat YouTube moet spelen: de uploads van het kanaal, of een gevonden video
-const ytSrc = d => d?.list ? {list: d.list} : d?.yt ? {id: d.yt} : null;
+function nextEngine(disc, why){
+  if (nowDisc !== disc) return;
+  if (why) playNote = why;
+  const e = disc.engines.shift();
+  clearTimeout(engineWatch);
+  stopEmbeds(e);
+  if (e === 'sp') playSpotify(disc);
+  else if (e === 'sc') playSC(disc);
+  else playAudio(disc);
+  showPlayNote(e);
+}
+function showPlayNote(e){
+  const n = $('playNote');
+  n.textContent = e === 'audio' && playNote ? t(playNote) : e === 'sp' && spPreview ? t('spLogin') : '';
+  n.hidden = !n.textContent;
+}
+function watch(disc, engine, isPlaying){              // start de speler niet vanzelf? dan de volgende
+  clearTimeout(engineWatch);
+  engineWatch = setTimeout(() => { if (nowDisc === disc && mode === engine && !isPlaying()) nextEngine(disc, 'tapPlayer'); }, 7000);
+}
+function stopEmbeds(keep){
+  if (keep !== 'sc' && sc.widget){ sc.target = 0; if (!CAN_VOLUME) try { sc.widget.pause(); } catch(e){} }
+  if (keep !== 'sp' && sp.ctl){ try { sp.ctl.pause(); } catch(e){} }
+  if (keep !== 'audio') decks.forEach(d => { d.target = 0; if (!CAN_VOLUME) d.el.pause(); });
+  $('scWrap').hidden = keep !== 'sc'; $('spWrap').hidden = keep !== 'sp';
+  $('nowCard').classList.toggle('embed', keep === 'sc' || keep === 'sp');
+}
+
+/* --- iTunes-fragment --- */
 async function playAudio(disc){
-  mode = 'audio'; ytTarget = 0; ytPending = null; clearTimeout(ytWatch);
-  if (!disc.track.preview){                             // Wikidata-artiest: nu pas een iTunes-fragment zoeken
+  mode = 'audio';
+  if (!disc.track.preview){                             // nu pas een iTunes-fragment zoeken
     const tr = await trackFor(disc.artist, disc.iso).catch(() => null);
     if (nowDisc !== disc) return;
     if (!tr){ if (soundOn && !spotifyOpen) playNext(); return; }
-    disc.track = {...tr, title: disc.vtitle || tr.title};
+    disc.track = {...tr, title: disc.track.title || tr.title};
     renderNow();
   }
   const next = decks[1 - active], prev = decks[active];
@@ -2316,52 +2343,98 @@ async function playAudio(disc){
   active = 1 - active;
   next.el.play().catch(() => { $('play').hidden = false; $('play').textContent = t('tapToStart'); });
 }
-async function playYT(disc){
-  mode = 'yt';
-  decks.forEach(d => { d.target = 0; if (!CAN_VOLUME) d.el.pause(); });
-  let p;
-  try { p = await ensurePlayer(); } catch(e){ if (nowDisc === disc){ disc.yt = disc.list = null; renderNow(); playAudio(disc); } return; }
-  if (nowDisc !== disc || mode !== 'yt') return;
-  ytTarget = 1;
-  if (CAN_VOLUME && ytVol > 0.05 && p.getPlayerState() === 1) ytPending = ytSrc(disc);   // eerst uitfaden
-  else startVid(ytSrc(disc));
-}
-let ytCueing = null;
-function startVid(src){
-  ytPending = null;
-  ytVol = CAN_VOLUME ? 0 : 1;
-  yt.setVolume(Math.round(ytVol * 100));
-  const disc = nowDisc;
-  disc.vid = null; disc.ending = false; disc.skips = 0;
-  if (src.list){ ytCueing = disc; yt.cuePlaylist({list: src.list, listType: 'playlist', index: 0}); }   // eerst klaarzetten, dan een willekeurige upload
-  else yt.loadVideoById(src.id);
-  clearTimeout(ytWatch);
-  ytWatch = setTimeout(() => {                          // start niet vanzelf (bijv. iPhone): fragment, en tik op de video
-    if (nowDisc === disc && mode === 'yt' && yt.getPlayerState() !== 1){ setDiscStatus(t('tapVideo')); playAudio(disc); }
-  }, 6000);
-}
-const pickUpload = () => { const n = (yt.getPlaylist?.() || []).length; yt.playVideoAt(Math.floor(Math.random() * Math.min(Math.max(n, 1), 15))); };
-function ytState(st){
-  const d = nowDisc;
-  if (st === 5 && ytCueing && ytCueing === d){ ytCueing = null; pickUpload(); return; }   // uploads klaar: kies er een
-  if (st === 1 && d && ytSrc(d)){
-    const vd = yt.getVideoData?.() || {};
-    if (mode === 'audio'){                              // zelf op de video getikt: die neemt het over
-      mode = 'yt'; ytTarget = 1; ytVol = 1; yt.setVolume(100);
-      decks.forEach(x => x.target = 0); setDiscStatus('');
-    }
-    if (d.list && d.vid && vd.video_id && vd.video_id !== d.vid && !d.ending && soundOn && !spotifyOpen){ d.ending = true; playNext(); return; }   // volgende upload begon vanzelf
-    if (vd.video_id && vd.video_id !== d.vid){ d.vid = vd.video_id; if (d.list && vd.title){ d.vtitle = vd.title; renderNow(); } }
-  }
-  if (st === 0 && mode === 'yt' && d && !d.ending && soundOn && !spotifyOpen){ d.ending = true; playNext(); }
-}
-function ytFailed(){
-  if (mode !== 'yt' || !nowDisc) return;
-  const d = nowDisc;
-  if (d.list && (d.errs || 0) < 3){ d.errs = (d.errs || 0) + 1; d.vid = null; pickUpload(); return; }   // deze upload mag niet ingesloten worden: een andere
-  nowDisc.yt = nowDisc.list = null; renderNow(); playAudio(nowDisc);
-}
 decks.forEach((d, i) => d.el.addEventListener('ended', () => { if (i === active && mode === 'audio' && soundOn && !spotifyOpen) playNext(); }));
+
+/* --- SoundCloud: het profiel van de artiest, een willekeurig nummer daaruit --- */
+const sc = {widget: null, boot: null, vol: 0, target: 0, pos: 0, dur: 0, playing: false, skips: 0};
+function scReady(){
+  if (sc.boot) return sc.boot;
+  sc.boot = (async () => {
+    if (!window.SC?.Widget) await loadScript('https://w.soundcloud.com/player/api.js');
+    const f = document.createElement('iframe');
+    f.allow = 'autoplay'; f.title = 'SoundCloud'; f.scrolling = 'no';
+    f.src = 'https://w.soundcloud.com/player/?url=' + encodeURIComponent('https://soundcloud.com/soundcloud') + '&auto_play=false&visual=false&show_comments=false&hide_related=true&show_reposts=false&show_teaser=false&color=%23ffc20e';
+    $('scWrap').append(f);
+    const w = SC.Widget(f);
+    await new Promise(res => w.bind(SC.Widget.Events.READY, res));
+    const E = SC.Widget.Events;
+    w.bind(E.PLAY, () => { sc.playing = true; scCurrent(); });
+    w.bind(E.PAUSE, () => { sc.playing = false; });
+    w.bind(E.PLAY_PROGRESS, e => { sc.pos = e.currentPosition || 0; });
+    w.bind(E.FINISH, () => { sc.playing = false; if (mode === 'sc' && nowDisc && !nowDisc.ending && soundOn && !spotifyOpen){ nowDisc.ending = true; playNext(); } });
+    w.bind(E.ERROR, () => { if (mode === 'sc' && nowDisc) nextEngine(nowDisc); });
+    sc.widget = w;
+    return w;
+  })();
+  sc.boot.catch(() => { sc.boot = null; });
+  return sc.boot;
+}
+function scCurrent(){                                    // titel en hoes van het nummer dat nu speelt
+  const d = nowDisc; if (!d || mode !== 'sc') return;
+  sc.widget.getCurrentSound(s => {
+    if (!s || nowDisc !== d) return;
+    sc.dur = s.duration || 0;
+    // alleen een fragment (Go+), een kort stukje of een urenlange mix? een ander nummer van de artiest
+    if ((s.policy === 'SNIP' || sc.dur < 60000 || sc.dur > 900000) && sc.skips < 4){ sc.skips++; scPick(); return; }
+    d.track.title = s.title || d.track.title; d.scUrl = s.permalink_url || d.scUrl;
+    if (s.artwork_url) d.track.art = s.artwork_url.replace('-large', '-t300x300');
+    renderNow();
+  });
+}
+function scPick(){
+  sc.widget.getSounds(list => {
+    const n = (list || []).length;
+    if (!n){ if (nowDisc) nextEngine(nowDisc); return; }
+    sc.widget.skip(Math.floor(Math.random() * Math.min(n, 10)));
+    sc.widget.play();
+  });
+}
+async function playSC(disc){
+  mode = 'sc'; sc.playing = false; sc.skips = 0; sc.pos = sc.dur = 0;
+  let w;
+  try { w = await scReady(); } catch(e){ return nextEngine(disc); }
+  if (nowDisc !== disc || mode !== 'sc') return;
+  sc.vol = CAN_VOLUME ? 0 : 1; sc.target = 1; w.setVolume(Math.round(sc.vol * 100));
+  w.load(`https://soundcloud.com/${disc.sc}`, {auto_play: false, visual: false, show_comments: false, hide_related: true, show_reposts: false, show_teaser: false, color: '#ffc20e',
+    callback: () => { if (nowDisc === disc && mode === 'sc') scPick(); }});
+  watch(disc, 'sc', () => sc.playing);
+}
+
+/* --- Spotify: de populairste nummers van de artiest (hele nummers als je bent ingelogd) --- */
+const sp = {ctl: null, boot: null, pos: 0, dur: 0, playing: false};
+let spPreview = false;                                   // alleen fragmenten: niet ingelogd bij Spotify
+function spReady(){
+  if (sp.boot) return sp.boot;
+  sp.boot = new Promise((res, rej) => {
+    window.onSpotifyIframeApiReady = api => {
+      api.createController($('spCtl'), {width: '100%', height: 152, uri: 'spotify:artist:' + (nowDisc?.spotify.id || '')}, ctl => {
+        ctl.addListener('playback_update', e => {
+          const d = e.data || {};
+          sp.playing = !d.isPaused && !d.isBuffering; sp.pos = d.position || 0; sp.dur = d.duration || 0;
+          if (sp.dur && sp.dur <= 31000 && !spPreview){ spPreview = true; showPlayNote(mode); }
+          // net voor het einde van het nummer: volgende artiest (Spotify zou anders doorspelen)
+          if (mode === 'sp' && nowDisc && !nowDisc.ending && sp.dur > 0 && sp.pos >= sp.dur - 1200 && soundOn && !spotifyOpen){ nowDisc.ending = true; playNext(); }
+        });
+        sp.ctl = ctl; res(ctl);
+      });
+    };
+    loadScript('https://open.spotify.com/embed/iframe-api/v1').catch(rej);
+    setTimeout(() => rej(new Error('Spotify te traag')), 10000);
+  });
+  sp.boot.catch(() => { sp.boot = null; });
+  return sp.boot;
+}
+async function playSpotify(disc){
+  mode = 'sp'; sp.playing = false; sp.pos = sp.dur = 0;
+  $('spWrap').hidden = false;
+  let c;
+  try { c = await spReady(); } catch(e){ return nextEngine(disc); }
+  if (nowDisc !== disc || mode !== 'sp') return;
+  c.loadUri('spotify:artist:' + disc.spotify.id);
+  c.play();
+  watch(disc, 'sp', () => sp.playing);
+}
+
 function fadeStep(){
   decks.forEach(d => {
     const want = soundOn && !spotifyOpen ? d.target : 0;
@@ -2371,31 +2444,22 @@ function fadeStep(){
       if (!want && d.el.volume === 0 && !d.el.paused) d.el.pause();
     } else if (!want && !d.el.paused) d.el.pause();
   });
-  let cur = 0, dur = 0;
-  if (yt){
-    const want = mode === 'yt' && soundOn && !spotifyOpen && !ytPending ? ytTarget : 0;
-    if (CAN_VOLUME){ ytVol += (want - ytVol) * 0.3; if (Math.abs(ytVol - want) < 0.02) ytVol = want; }
-    else ytVol = want;
-    try {
-      yt.setVolume(Math.round(ytVol * 100));
-      if (ytPending && ytVol <= 0.05) startVid(ytPending);
-      else if (!want && ytVol === 0 && yt.getPlayerState() === 1) yt.pauseVideo();
-      if (mode === 'yt'){
-        cur = yt.getCurrentTime() || 0; dur = yt.getDuration() || 0;
-        const d = nowDisc;
-        // uploads: geen shorts en geen urenlange sets; een paar keer een andere kiezen
-        if (d?.list && d.vid && dur && (dur < 60 || dur > 900) && d.skips < 3){ d.skips++; d.vid = null; pickUpload(); }
-        else if (d && !d.ending && dur > 30 && cur > dur - 1 && soundOn && !spotifyOpen){ d.ending = true; playNext(); }   // net voor het einde: volgende artiest
-      }
-    } catch(e){}
+  if (sc.widget){
+    const want = mode === 'sc' && soundOn && !spotifyOpen ? sc.target : 0;
+    if (CAN_VOLUME){ sc.vol += (want - sc.vol) * 0.3; if (Math.abs(sc.vol - want) < 0.02) sc.vol = want; } else sc.vol = want;
+    try { sc.widget.setVolume(Math.round(sc.vol * 100)); if (!want && sc.vol === 0 && sc.playing) sc.widget.pause(); } catch(e){}
   }
+  if (sp.ctl && (mode !== 'sp' || !soundOn || spotifyOpen) && sp.playing){ try { sp.ctl.pause(); } catch(e){} sp.playing = false; }
+  let cur = 0, dur = 0;
   if (mode === 'audio'){ const a = decks[active].el; cur = a.currentTime; dur = a.duration || 0; }
+  else if (mode === 'sc'){ cur = sc.pos; dur = sc.dur; }
+  else if (mode === 'sp'){ cur = sp.pos; dur = sp.dur; }
   $('nowProg').style.width = dur ? `${Math.min(100, cur / dur * 100)}%` : '0';
 }
 
 let musicLead = null;                // het land waarvan nu muziek speelt
-const isPlaying = () => mode === 'yt' ? [1, 3].includes(yt?.getPlayerState?.()) : !decks[active].el.paused;
-const deadEnd = lead => noMusic.has(`${lead.iso}|${discGenre}|${yearsText()}`);
+const isPlaying = () => mode === 'sc' ? sc.playing : mode === 'sp' ? sp.playing : !decks[active].el.paused;
+const deadEnd = lead => noMusic.has(`${lead.iso}|${discGenre}|${yearsText()}|${fame}`);
 async function startCountry(lead){
   const my = ++playReq;
   const c = countryName(lead.iso, lead.country), g = genreLow(discGenre);
@@ -2473,18 +2537,15 @@ function renderNow(){
   card.hidden = false; $('discIntro').hidden = true;
   const art = $('nowArt'); art.onerror = () => { art.style.visibility = 'hidden'; };
   art.style.visibility = d.track.art ? '' : 'hidden'; art.alt = ''; art.src = d.track.art || '';
-  $('nowTitle').textContent = d.vtitle || d.track.title;
+  $('nowTitle').textContent = d.track.title || (mode === 'sp' ? t('spTop') : '\u2026');
   $('nowArtist').textContent = d.artist.name;
-  const meta = [`${flagOf(d.iso)} ${countryName(d.iso)}`, d.artist.tags.join(', '), d.artist.begin ? t('since', {y: d.artist.begin}) : ''].filter(Boolean);
+  const meta = [`${flagOf(d.iso)} ${countryName(d.iso)}`, d.artist.tags.join(', '), d.artist.label ? t('onLabel', {l: d.artist.label}) : '', d.artist.begin ? t('since', {y: d.artist.begin}) : ''].filter(Boolean);
   $('nowMeta').textContent = meta.join(' \u00b7 ');
   $('spLink').href = d.spotify.url;
   $('apLink').href = d.track.appleUrl || `https://music.apple.com/search?term=${encodeURIComponent(d.artist.name)}`;
-  $('spPlay').hidden = !d.spotify.id;
-  const v = !!ytSrc(d), vid = d.vid || d.yt;
-  card.classList.toggle('video', v);
-  $('ytWrap').hidden = !v;
-  $('ytLink').hidden = !v;
-  if (v) $('ytLink').href = vid ? `https://www.youtube.com/watch?v=${vid}` : `https://www.youtube.com/playlist?list=${d.list}`;
+  $('spPlay').hidden = !d.spotify.id || mode === 'sp';
+  $('scLink').hidden = !d.sc;
+  if (d.sc) $('scLink').href = d.scUrl || `https://soundcloud.com/${d.sc}`;
   renderFavBtn();
 }
 
@@ -2492,13 +2553,13 @@ function renderNow(){
 let favs = [];
 try { favs = JSON.parse(localStorage.getItem('discFavs') || '[]'); } catch(e){ favs = []; }
 const saveFavs = () => { try { localStorage.setItem('discFavs', JSON.stringify(favs)); } catch(e){} };
-const favKey = d => d.vid ? 'yt:' + d.vid : d.track.preview || d.list;   // welk nummer precies
+const favKey = d => d.scUrl || d.track.preview || `${d.spotify.url}|${d.track.title}`;   // welk nummer precies
 const isFav = d => d && favs.some(f => f.preview === favKey(d));
 function toggleFav(d){
   if (!d) return;
   if (isFav(d)) favs = favs.filter(f => f.preview !== favKey(d));
-  else favs.unshift({preview: favKey(d), title: d.vtitle || d.track.title, artist: d.artist.name, iso: d.iso, art: d.track.art,
-                     appleUrl: d.track.appleUrl, spotifyUrl: d.spotify.url, ytUrl: (d.vid || d.yt) ? `https://www.youtube.com/watch?v=${d.vid || d.yt}` : '', cs: lastLead?.cs || '', date: new Date().toISOString()});
+  else favs.unshift({preview: favKey(d), title: d.track.title || t('spTop'), artist: d.artist.name, iso: d.iso, art: d.track.art,
+                     appleUrl: d.track.appleUrl, spotifyUrl: d.spotify.url, scUrl: d.scUrl || (d.sc ? `https://soundcloud.com/${d.sc}` : ''), cs: lastLead?.cs || '', date: new Date().toISOString()});
   saveFavs(); renderFavBtn(); renderFavs();
 }
 function renderFavBtn(){
@@ -2524,7 +2585,7 @@ function renderFavs(){
     const rm = el('button', 'rm', '\u00d7'); rm.type = 'button'; rm.title = t('remove'); rm.setAttribute('aria-label', t('remove'));
     rm.onclick = () => { favs.splice(i, 1); saveFavs(); renderFavs(); renderFavBtn(); };
     links.append(sp, ap);
-    if (f.ytUrl){ const y = el('a', null, 'YouTube'); y.href = f.ytUrl; y.target = '_blank'; y.rel = 'noopener'; links.append(y); }
+    if (f.scUrl){ const y = el('a', null, 'SoundCloud'); y.href = f.scUrl; y.target = '_blank'; y.rel = 'noopener'; links.append(y); }
     links.append(rm);
     li.append(im, tx, links);
     ol.append(li);
@@ -2549,7 +2610,8 @@ function backToLive(){
   $('spEmbed').innerHTML = ''; $('spEmbed').hidden = true;
   $('backLive').hidden = true;
   if (!soundOn) return;
-  if (mode === 'yt' && yt){ ytTarget = 1; try { yt.playVideo(); } catch(e){} }
+  if (mode === 'sc' && sc.widget){ sc.target = 1; sc.widget.play(); }
+  else if (mode === 'sp' && sp.ctl) sp.ctl.resume();
   else { const a = decks[active]; a.target = 1; a.el.play().catch(() => {}); }
 }
 
@@ -2617,7 +2679,7 @@ function mailLink(){
   const lines = [t('mailIntro'), ''];
   let n = 0;
   for (const f of favs){
-    const link = f.ytUrl || f.spotifyUrl || f.appleUrl || '';
+    const link = f.scUrl || f.spotifyUrl || f.appleUrl || '';
     const block = [`${f.artist} \u2013 ${f.title} (${countryName(f.iso)})`].concat(link ? [link] : [], ['']);
     if ((lines.join('\n') + block.join('\n')).length > 1200){ lines.push(t('mailMore', {n: favs.length - n}), ''); break; }
     lines.push(...block); n++;
@@ -2634,6 +2696,23 @@ $('copyFavs').onclick = () => {
 };
 renderFavs();
 initTabs();
+$('fame').value = fame;
+const showFame = () => { $('fameVal').textContent = t('fame' + fame); };
+showFame();
+$('fame').oninput = e => { fame = +e.target.value; showFame(); };
+$('fame').onchange = () => {
+  try { localStorage.setItem('discFame', fame); } catch(err){}
+  ready.clear(); upNextKey = ''; noMusic.clear();
+  if (soundOn && (lastLead || musicLead) && !spotifyOpen) startCountry(lastLead || musicLead);
+};
+$('haveSp').checked = haveSpotify;
+$('haveSp').onchange = e => {
+  haveSpotify = e.target.checked; spPreview = false;
+  try { localStorage.setItem('discSpotify', haveSpotify ? '1' : '0'); } catch(err){}
+  ready.clear(); upNextKey = '';
+  if (soundOn && (lastLead || musicLead) && !spotifyOpen) startCountry(lastLead || musicLead);
+};
+
 
 applyI18n();
 document.querySelector('.langs').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b && b.dataset.lang !== LANG) setLang(b.dataset.lang); });
@@ -2650,6 +2729,7 @@ function shareLink(){
   }
   q.set('r', radiusKm);
   q.set('genre', discGenre);
+  q.set('fame', fame);
   if (yearFrom !== YEAR_MIN || yearTo !== YEAR_MAX) q.set('years', `${yearFrom}-${yearTo}`);
   return u.toString();
 }

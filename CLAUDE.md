@@ -27,9 +27,14 @@ Dezelfde als bij RADIO:
 1. **De dj:** het dichtstbijzijnde toestel binnen je straal met een bekende route. Land via `anthemTarget` (vertrekker: bestemming; lander: herkomst). Het land blijft draaien tot er een toestel uit een ander land binnen je straal komt.
 2. **Artiest zoeken** (`artistsFor`): MusicBrainz-zoekopdracht `country:XX AND tag:"genre"`, eerste 100 plus soms een willekeurige diepere pagina, zodat je ook onbekende artiesten krijgt.
 3. **Fragment** (`trackFor`): iTunes Search API, alleen treffers waarvan de artiestnaam precies overeenkomt en die een `previewUrl` hebben (30 s). Eerst de winkel van dat land, dan de VS. Dit levert titel, hoes en het reservefragment.
-3a. **Eerst Wikidata** (`wdArtists`): per land en genre (P136 + subgenres via P279*, root = muziekgenre Q188451 met label = genre) alleen artiesten met een YouTube-kanaal (P2397), plus Spotify-ID (P1902) en actieve jaren. Die geven gegarandeerd hele nummers. Het iTunes-fragment wordt dan pas gezocht als YouTube faalt. Lukt de zoekopdracht niet (te traag, >25 s in de proxy), dan deze sessie de MusicBrainz-route. Volgorde per genre: Wikidata, dan MusicBrainz; dan pas het bovenliggende genre.
-3b. **Heel nummer, zonder quotum:** `spotifyFor` haalt via MusicBrainz (`url-rels`) ook het **YouTube-kanaal** van de artiest op (`youtube.com/channel/UC…`), anders via Wikidata (P2397). De YouTube-speler speelt dan de uploads van dat kanaal (`list = 'UU' + kanaal-ID zonder 'UC'`, `cuePlaylist` en daarna een willekeurige upload van de eerste 15). Daar is geen API-sleutel voor nodig en er is geen quotum, dus het groeit mee met het aantal gebruikers. Shorts (<60 s) en lange sets (>15 min) worden overgeslagen. Titel op de kaart = titel van de video. Begint de speler vanzelf aan de volgende upload, of is een video bijna af, dan volgt de volgende artiest. De jarenschuif geldt hier niet voor de video zelf, wel voor de artiest.
-3c. **Geen kanaal:** dan pas bij afspelen een YouTube Data API-zoekopdracht (`youtubeFor`, ~100 per dag in totaal, sleutel in `/home/fodis/.discovery-youtube-key`). Quotum op (`quotaExceeded`, doorgegeven door de proxy): tot middernacht Pacific-tijd (~9:00 bij ons) fragmenten, met de melding `ytQuota` onder de kaart. Lukt YouTube niet, of start hij niet binnen 6 s (iPhone): het iTunes-fragment, "Tik op de video" om alsnog de video te starten.
+3a. **Eerst Wikidata** (`wdArtists`): per land en genre (P136 + subgenres via P279*, root = muziekgenre Q188451 met label = genre) alleen artiesten die officieel te beluisteren zijn: SoundCloud-account (P3040) of Spotify-artiest (P1902). Ook platenlabel (P264, getoond als "label: …") en aantal Wikipedia-talen (`wikibase:sitelinks`). Mislukt de zoekopdracht (>25 s in de proxy), dan deze sessie de MusicBrainz-route.
+3b. **Hoe bekend?** (`fame`, 0–4, `FAME_STEPS` = minimaal 0/1/3/8/20 Wikipedia-talen, `localStorage` `discFame`, deelbaar met `fame=`). Vanaf stand 2 geen MusicBrainz-route meer (daar is bekendheid onbekend).
+3c. **Afspelen, alleen geluid** (geen YouTube meer: video leidde af). Per nummer een lijst spelers (`enginesFor`), de eerste die werkt speelt (`nextEngine`):
+   - `sp`: **Spotify** iFrame API (`open.spotify.com/embed/iframe-api/v1`), artiest-URI → populairste nummers. Alleen als de luisteraar "Ik heb Spotify" aanvinkt (`discSpotify`). Ingelogd bij Spotify in die browser = hele nummers; anders fragmenten van 30 s (gedetecteerd via duur ≤ 31 s → melding `spLogin`). Geen volumeregeling, dus harde wissel. Net voor het einde van het nummer: volgende artiest.
+   - `sc`: **SoundCloud**-widget (`w.soundcloud.com/player/api.js`) met het profiel van de artiest; willekeurig nummer uit de eerste 10. Hele nummers zonder login. Go+-fragmenten (`policy: 'SNIP'`), nummers < 1 min of > 15 min worden overgeslagen. Titel en hoes uit de widget. Volume-fades werken.
+   - `audio`: iTunes-fragment (reserve, crossfades).
+   Start een speler niet binnen 7 s (bijv. iPhone zonder tik), dan de volgende (`watch`, melding `tapPlayer`).
+3d. SoundCloud-account via MusicBrainz (`url-rels`, `soundcloud.com/<naam>`) of Wikidata (P3040).
 4. **Genres en strengheid:** `GENRE_GROUPS` (77 MusicBrainz-tags in 9 groepen), `GENRE_PARENT` (subgenre → bovenliggend genre), `GENRE_LABEL` (namen in nl/de waar die afwijken). Streng: het genre moet onder de **drie belangrijkste tags** van de artiest vallen (`fitsGenre`/`underGenre`: zelfde tag, tag die op het genre eindigt zoals "indie rock" → rock, of via `GENRE_PARENT`).
 4b. **Periode:** schuif met twee knoppen (`yearFrom`/`yearTo`, 1900 tot nu, `localStorage` `discYears`). Artiest moet in die periode actief zijn (`fitsYears`: begin/einde uit MusicBrainz) en het iTunes-nummer moet in die jaren uitgebracht zijn. Let op: oude muziek staat bij iTunes vaak met de datum van een heruitgave, dus vroege periodes geven minder treffers.
 4c. **Volgorde** (`discover`): nieuwe artiest in jouw genre, dan in het bovenliggende genre (melding "dit is {p}"), daarna mag een eerder gehoorde artiest terugkomen. Nooit meer een willekeurig ander genre. Niets gevonden: het land komt in `noMusic` en de app blijft bij het land dat al speelde (`musicLead`, melding "We blijven nog even bij …").
@@ -53,13 +58,13 @@ Alles van RADIO (vluchten, routes, Wikidata, Wereldbank, Frankfurter, Big Mac, A
 
 | Bron | Waarvoor | Cache |
 |---|---|---|
-| musicbrainz.org | Artiesten per land en genre, Spotify-link per artiest | 1 dag, max 1 verzoek/s |
+| musicbrainz.org | Artiesten per land en genre, Spotify- en SoundCloud-link per artiest | 1 dag, max 1 verzoek/s |
+| query.wikidata.org | Artiesten met SoundCloud/Spotify, label, bekendheid | 1 dag, timeout 25 s |
 | itunes.apple.com | Titel, hoes, reservefragment van 30 s, link naar Apple Music | 1 dag |
-| www.googleapis.com (alleen `/youtube/v3/search`) | Video-ID voor het hele nummer | 1 week |
 
 Radio-browser en de ICY-radiotekst zijn eruit gehaald.
 
-**YouTube-sleutel:** staat NIET in de repo. `proxy.php` leest hem uit `/home/fodis/.discovery-youtube-key` (één regel) en plakt hem achter de zoekopdracht; de cache gebruikt de URL zonder sleutel. Zonder sleutelbestand geeft de proxy 503 en speelt de app fragmenten. Quotum: 10.000 eenheden per dag, een zoekopdracht kost er 100, dus ongeveer 100 nieuwe zoekopdrachten per dag voor alle gebruikers samen (de weekcache helpt).
+YouTube is eruit (oktober 2026): de video's leidden af en de zoek-API had een dagquotum van ~100 zoekopdrachten. Het sleutelbestand `/home/fodis/.discovery-youtube-key` wordt niet meer gebruikt.
 
 **Risico:** de iTunes Search API staat ongeveer 20 verzoeken per minuut per IP toe, en alles gaat via het IP van de server. Bij veel gebruikers tegelijk kan dat knellen. Oplossing als het nodig is: iTunes rechtstreeks vanuit de browser aanroepen (die API ondersteunt JSONP), dan telt het per gebruiker.
 
