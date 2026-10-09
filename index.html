@@ -224,6 +224,9 @@
   #scWrap iframe{width:100%;height:166px;border:0;display:block}
   #spWrap iframe{border:0;display:block}
   .play-note{margin:-6px 0 14px;font-size:.85rem;color:var(--muted)}
+  .sp-login{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:-4px 0 14px 26px;font-size:.85rem;color:var(--muted)}
+  .sp-btn{background:#1db954;color:#000;border-color:#1db954;font-weight:600;min-height:40px}
+  .sp-btn:hover{background:#1ed760}
   .check{display:flex;gap:8px;align-items:flex-start;margin:0 0 12px;font-size:.9rem;color:var(--muted);cursor:pointer}
   .check input{margin-top:3px;accent-color:var(--sign-yellow);width:18px;height:18px}
   .sp-embed{margin:0 0 14px}
@@ -349,7 +352,11 @@
           <label for="genre" data-i18n="iDiscover">Ik ontdek graag:</label>
           <select id="genre" data-i18n-attr="aria-label:genreAria"></select>
         </div>
-        <label class="check"><input type="checkbox" id="haveSp"> <span data-i18n="haveSpotify">Ik heb Spotify: speel hele nummers via mijn account (log in op open.spotify.com in deze browser)</span></label>
+        <label class="check"><input type="checkbox" id="haveSp"> <span data-i18n="haveSpotify">Ik heb Spotify: speel hele nummers via mijn account</span></label>
+        <div class="sp-login" id="spLoginBox" hidden>
+          <button class="btn sp-btn" id="spLoginBtn" type="button"></button>
+          <span id="spLoginState"></span>
+        </div>
         <div class="fame">
           <div class="years-head"><span data-i18n="fameLabel">Hoe bekend?</span><output id="fameVal"></output></div>
           <input type="range" id="fame" min="0" max="4" step="1" data-i18n-attr="aria-label:fameLabel">
@@ -516,8 +523,8 @@ const I18N = {
     mailIntro:'Deze muziek ontdekte ik met de vliegtuigen boven me:',
     mailMore:'\u2026 en nog {n} nummers.',
     copyIntro:'Deze muziek ontdekte ik met DJ VLIEGTUIG DISCOVERY:',
-    haveSpotify:'Ik heb Spotify: speel hele nummers via mijn account (log in op open.spotify.com in deze browser)',
-    spLogin:'Je hoort fragmenten: log in op open.spotify.com in deze browser voor hele nummers.',
+    haveSpotify:'Ik heb Spotify: speel hele nummers via mijn account',
+    spLogin:'Je hoort fragmenten van Spotify: log in (knop hierboven) voor hele nummers.',
     spTop:'Populairste nummers',
     tapPlayer:'De speler startte niet vanzelf: je hoort een fragment. Tik op \u25b6 in de speler voor het hele nummer.',
     onLabel:'label: {l}',
@@ -527,6 +534,11 @@ const I18N = {
     fame2:'redelijk bekend',
     fame3:'bekend',
     fame4:'alleen grote namen',
+    spLoginBtn:'Log in bij Spotify',
+    spLoginBusy:'Inloggen\u2026 kom daarna terug',
+    spLoginHint:'Eenmalig, daarna hoor je hele nummers.',
+    spOk:'\u2713 Ingelogd: je hoort hele nummers.',
+    spStillPreview:'Je hoort nog fragmenten. Log in; lukt het niet, gebruik dan Chrome (Safari en Firefox blokkeren dit vaak).',
   },
   en: {
     pickSpot:'Choose a spot or airport', useGps:'Use my location', soundOn:'Start sound', soundOff:'Sound off',
@@ -626,8 +638,8 @@ const I18N = {
     mailIntro:'I discovered this music with the planes flying over me:',
     mailMore:'\u2026 and {n} more tracks.',
     copyIntro:'I discovered this music with DJ VLIEGTUIG DISCOVERY:',
-    haveSpotify:'I have Spotify: play full tracks through my account (log in at open.spotify.com in this browser)',
-    spLogin:'You hear clips: log in at open.spotify.com in this browser for full tracks.',
+    haveSpotify:'I have Spotify: play full tracks through my account',
+    spLogin:'You hear Spotify clips: log in (button above) for full tracks.',
     spTop:'Top tracks',
     tapPlayer:'The player did not start by itself: you hear a clip. Tap \u25b6 in the player for the full track.',
     onLabel:'label: {l}',
@@ -637,6 +649,11 @@ const I18N = {
     fame2:'fairly known',
     fame3:'well known',
     fame4:'only big names',
+    spLoginBtn:'Log in to Spotify',
+    spLoginBusy:'Logging in\u2026 come back afterwards',
+    spLoginHint:'Once only, then you hear full tracks.',
+    spOk:'\u2713 Logged in: you hear full tracks.',
+    spStillPreview:'You still hear clips. Log in; if that does not help, use Chrome (Safari and Firefox often block this).',
   },
   de: {
     pickSpot:'Ort oder Flughafen w\u00e4hlen', useGps:'Meinen Standort verwenden', soundOn:'Ton starten', soundOff:'Ton aus',
@@ -736,8 +753,8 @@ const I18N = {
     mailIntro:'Diese Musik habe ich mit den Flugzeugen \u00fcber mir entdeckt:',
     mailMore:'\u2026 und {n} weitere Titel.',
     copyIntro:'Diese Musik habe ich mit DJ VLIEGTUIG DISCOVERY entdeckt:',
-    haveSpotify:'Ich habe Spotify: ganze Titel \u00fcber mein Konto abspielen (in diesem Browser bei open.spotify.com anmelden)',
-    spLogin:'Du h\u00f6rst Ausschnitte: Melde dich in diesem Browser bei open.spotify.com an f\u00fcr ganze Titel.',
+    haveSpotify:'Ich habe Spotify: ganze Titel \u00fcber mein Konto abspielen',
+    spLogin:'Du h\u00f6rst Spotify-Ausschnitte: melde dich an (Knopf oben) f\u00fcr ganze Titel.',
     spTop:'Beliebteste Titel',
     tapPlayer:'Der Player ist nicht von selbst gestartet: Du h\u00f6rst einen Ausschnitt. Tippe im Player auf \u25b6 f\u00fcr den ganzen Titel.',
     onLabel:'Label: {l}',
@@ -747,6 +764,11 @@ const I18N = {
     fame2:'einigerma\u00dfen bekannt',
     fame3:'bekannt',
     fame4:'nur gro\u00dfe Namen',
+    spLoginBtn:'Bei Spotify anmelden',
+    spLoginBusy:'Anmelden\u2026 komm danach zur\u00fcck',
+    spLoginHint:'Einmalig, danach h\u00f6rst du ganze Titel.',
+    spOk:'\u2713 Angemeldet: du h\u00f6rst ganze Titel.',
+    spStillPreview:'Du h\u00f6rst noch Ausschnitte. Melde dich an; hilft das nicht, nimm Chrome (Safari und Firefox blockieren das oft).',
   },
 };
 const LANGS = ['nl', 'en', 'de'];
@@ -2403,26 +2425,56 @@ async function playSC(disc){
 /* --- Spotify: de populairste nummers van de artiest (hele nummers als je bent ingelogd) --- */
 const sp = {ctl: null, boot: null, pos: 0, dur: 0, playing: false};
 let spPreview = false;                                   // alleen fragmenten: niet ingelogd bij Spotify
+let spOk = false;                                        // ooit een heel nummer gehoord: ingelogd
+try { spOk = localStorage.getItem('discSpotifyOk') === '1'; } catch(e){}
 function spReady(){
   if (sp.boot) return sp.boot;
   sp.boot = new Promise((res, rej) => {
-    window.onSpotifyIframeApiReady = api => {
+    const make = api => {
+      if (!$('spCtl')){ const div = document.createElement('div'); div.id = 'spCtl'; $('spWrap').append(div); }
       api.createController($('spCtl'), {width: '100%', height: 152, uri: 'spotify:artist:' + (nowDisc?.spotify.id || '')}, ctl => {
         ctl.addListener('playback_update', e => {
           const d = e.data || {};
           sp.playing = !d.isPaused && !d.isBuffering; sp.pos = d.position || 0; sp.dur = d.duration || 0;
-          if (sp.dur && sp.dur <= 31000 && !spPreview){ spPreview = true; showPlayNote(mode); }
+          if (sp.dur && sp.dur <= 31000 && !spPreview){ spPreview = true; spOk = false; saveSpOk(); showPlayNote(mode); renderSpLogin(); }
+          if (sp.dur > 31000 && !spOk){ spOk = true; spPreview = false; saveSpOk(); showPlayNote(mode); renderSpLogin(); }
           // net voor het einde van het nummer: volgende artiest (Spotify zou anders doorspelen)
           if (mode === 'sp' && nowDisc && !nowDisc.ending && sp.dur > 0 && sp.pos >= sp.dur - 1200 && soundOn && !spotifyOpen){ nowDisc.ending = true; playNext(); }
         });
         sp.ctl = ctl; res(ctl);
       });
     };
+    if (sp.api) return make(sp.api);
+    window.onSpotifyIframeApiReady = api => { sp.api = api; make(api); };
     loadScript('https://open.spotify.com/embed/iframe-api/v1').catch(rej);
     setTimeout(() => rej(new Error('Spotify te traag')), 10000);
   });
   sp.boot.catch(() => { sp.boot = null; });
   return sp.boot;
+}
+const saveSpOk = () => { try { localStorage.setItem('discSpotifyOk', spOk ? '1' : '0'); } catch(e){} };
+function spReload(){                                     // na inloggen: speler opnieuw laden, dan kent hij de login
+  try { sp.ctl?.destroy?.(); } catch(e){}
+  $('spWrap').innerHTML = ''; sp.ctl = null; sp.boot = null; sp.playing = false; spPreview = false;
+  if (mode === 'sp' && nowDisc && soundOn){ nowDisc.ending = false; playSpotify(nowDisc); }
+}
+/* Inloggen bij Spotify: het gewone inlogvenster van Spotify in een pop-up (op telefoons een
+   nieuw tabblad). Komt de luisteraar terug, dan laden we de speler opnieuw. */
+let spLoginPending = false;
+function spLogin(){
+  const url = 'https://accounts.spotify.com/login?continue=' + encodeURIComponent('https://open.spotify.com/');
+  const w = window.open(url, 'spotifyLogin', 'width=480,height=760');
+  spLoginPending = true; renderSpLogin();
+  const done = () => { if (!spLoginPending) return; spLoginPending = false; renderSpLogin(); spReload(); };
+  if (w){ const iv = setInterval(() => { if (w.closed){ clearInterval(iv); done(); } }, 600); }
+  const back = () => { if (document.visibilityState === 'visible'){ document.removeEventListener('visibilitychange', back); setTimeout(done, 400); } };
+  setTimeout(() => document.addEventListener('visibilitychange', back), 1000);
+}
+function renderSpLogin(){
+  $('spLoginBox').hidden = !haveSpotify;
+  $('spLoginBtn').hidden = spOk && !spPreview;
+  $('spLoginBtn').textContent = spLoginPending ? t('spLoginBusy') : t('spLoginBtn');
+  $('spLoginState').textContent = spOk && !spPreview ? t('spOk') : spPreview ? t('spStillPreview') : t('spLoginHint');
 }
 async function playSpotify(disc){
   mode = 'sp'; sp.playing = false; sp.pos = sp.dur = 0;
@@ -2706,8 +2758,10 @@ $('fame').onchange = () => {
   if (soundOn && (lastLead || musicLead) && !spotifyOpen) startCountry(lastLead || musicLead);
 };
 $('haveSp').checked = haveSpotify;
+$('spLoginBtn').onclick = spLogin;
+renderSpLogin();
 $('haveSp').onchange = e => {
-  haveSpotify = e.target.checked; spPreview = false;
+  haveSpotify = e.target.checked; spPreview = false; renderSpLogin();
   try { localStorage.setItem('discSpotify', haveSpotify ? '1' : '0'); } catch(err){}
   ready.clear(); upNextKey = '';
   if (soundOn && (lastLead || musicLead) && !spotifyOpen) startCountry(lastLead || musicLead);
