@@ -535,7 +535,8 @@ const I18N = {
     fame3:'bekend',
     fame4:'alleen grote namen',
     spLoginBtn:'Log in bij Spotify',
-    spLoginBusy:'Inloggen\u2026 kom daarna terug',
+    spLoginBusy:'Ingelogd? Tik hier (of sluit het Spotify-venster)',
+    spNoFull:'Op iPhone en iPad (ook in Chrome), Safari en Firefox laat Spotify in een website alleen fragmenten horen, ook als je bent ingelogd. Daarom krijgt SoundCloud hier voorrang: dat zijn wel hele nummers. Hele nummers via Spotify: Chrome of Edge op een computer.',
     spLoginHint:'Eenmalig, daarna hoor je hele nummers.',
     spOk:'\u2713 Ingelogd: je hoort hele nummers.',
     spStillPreview:'Je hoort nog fragmenten. Log in; lukt het niet, gebruik dan Chrome (Safari en Firefox blokkeren dit vaak).',
@@ -650,7 +651,8 @@ const I18N = {
     fame3:'well known',
     fame4:'only big names',
     spLoginBtn:'Log in to Spotify',
-    spLoginBusy:'Logging in\u2026 come back afterwards',
+    spLoginBusy:'Logged in? Tap here (or close the Spotify window)',
+    spNoFull:'On iPhone and iPad (Chrome too), Safari and Firefox, Spotify only plays clips inside a website, even when you are logged in. So SoundCloud goes first here: those are full tracks. Full tracks via Spotify: Chrome or Edge on a computer.',
     spLoginHint:'Once only, then you hear full tracks.',
     spOk:'\u2713 Logged in: you hear full tracks.',
     spStillPreview:'You still hear clips. Log in; if that does not help, use Chrome (Safari and Firefox often block this).',
@@ -765,7 +767,8 @@ const I18N = {
     fame3:'bekannt',
     fame4:'nur gro\u00dfe Namen',
     spLoginBtn:'Bei Spotify anmelden',
-    spLoginBusy:'Anmelden\u2026 komm danach zur\u00fcck',
+    spLoginBusy:'Angemeldet? Hier tippen (oder Spotify-Fenster schlie\u00dfen)',
+    spNoFull:'Auf iPhone und iPad (auch in Chrome), in Safari und Firefox spielt Spotify in einer Website nur Ausschnitte, auch wenn du angemeldet bist. Deshalb hat SoundCloud hier Vorrang: das sind ganze Titel. Ganze Titel \u00fcber Spotify: Chrome oder Edge am Computer.',
     spLoginHint:'Einmalig, danach h\u00f6rst du ganze Titel.',
     spOk:'\u2713 Angemeldet: du h\u00f6rst ganze Titel.',
     spStillPreview:'Du h\u00f6rst noch Ausschnitte. Melde dich an; hilft das nicht, nimm Chrome (Safari und Firefox blockieren das oft).',
@@ -2304,10 +2307,21 @@ let mode = 'audio', engineWatch = 0, playNote = '';
 let haveSpotify = false;
 try { haveSpotify = localStorage.getItem('discSpotify') === '1'; } catch(e){}
 const loadScript = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.append(el); });
+/* Hele Spotify-nummers in een website kan alleen als de browser cookies van derden toestaat.
+   iPhone/iPad (elke browser daar is van binnen Safari), Safari en Firefox blokkeren dat: daar blijven het
+   fragmenten, ook na inloggen. Dan gaat SoundCloud voor. */
+const SP_FULL = (() => {
+  const u = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1);
+  const safari = /Safari\//.test(u) && !/Chrome|Chromium|Edg|OPR/.test(u);
+  return !(ios || safari || /Firefox\//.test(u));
+})();
 function enginesFor(d){
   const list = [];
-  if (haveSpotify && d.spotify.id) list.push('sp');
+  const sp = haveSpotify && d.spotify.id;
+  if (sp && SP_FULL) list.push('sp');
   if (d.sc) list.push('sc');
+  if (sp && !SP_FULL) list.push('sp');
   list.push('audio');
   return list;
 }
@@ -2332,7 +2346,7 @@ function nextEngine(disc, why){
 }
 function showPlayNote(e){
   const n = $('playNote');
-  n.textContent = e === 'audio' && playNote ? t(playNote) : e === 'sp' && spPreview ? t('spLogin') : '';
+  n.textContent = e === 'audio' && playNote ? t(playNote) : e === 'sp' && spPreview && SP_FULL ? t('spLogin') : '';
   n.hidden = !n.textContent;
 }
 function watch(disc, engine, isPlaying){              // start de speler niet vanzelf? dan de volgende
@@ -2465,13 +2479,16 @@ function spLogin(){
   const url = 'https://accounts.spotify.com/login?continue=' + encodeURIComponent('https://open.spotify.com/');
   const w = window.open(url, 'spotifyLogin', 'width=480,height=760');
   spLoginPending = true; renderSpLogin();
-  const done = () => { if (!spLoginPending) return; spLoginPending = false; renderSpLogin(); spReload(); };
-  if (w){ const iv = setInterval(() => { if (w.closed){ clearInterval(iv); done(); } }, 600); }
-  const back = () => { if (document.visibilityState === 'visible'){ document.removeEventListener('visibilitychange', back); setTimeout(done, 400); } };
+  if (w){ const iv = setInterval(() => { if (w.closed){ clearInterval(iv); spLoginDone(); } }, 600); }
+  const back = () => { if (document.visibilityState === 'visible'){ document.removeEventListener('visibilitychange', back); setTimeout(spLoginDone, 400); } };
   setTimeout(() => document.addEventListener('visibilitychange', back), 1000);
 }
+// Spotify stuurt na inloggen niet terug naar ons (alleen naar open.spotify.com): de luisteraar komt zelf
+// terug, sluit de pop-up of tikt nog eens op de knop.
+function spLoginDone(){ if (!spLoginPending) return; spLoginPending = false; renderSpLogin(); spReload(); }
 function renderSpLogin(){
   $('spLoginBox').hidden = !haveSpotify;
+  if (!SP_FULL){ $('spLoginBtn').hidden = true; $('spLoginState').textContent = t('spNoFull'); return; }
   $('spLoginBtn').hidden = spOk && !spPreview;
   $('spLoginBtn').textContent = spLoginPending ? t('spLoginBusy') : t('spLoginBtn');
   $('spLoginState').textContent = spOk && !spPreview ? t('spOk') : spPreview ? t('spStillPreview') : t('spLoginHint');
@@ -2758,7 +2775,7 @@ $('fame').onchange = () => {
   if (soundOn && (lastLead || musicLead) && !spotifyOpen) startCountry(lastLead || musicLead);
 };
 $('haveSp').checked = haveSpotify;
-$('spLoginBtn').onclick = spLogin;
+$('spLoginBtn').onclick = () => spLoginPending ? spLoginDone() : spLogin();
 renderSpLogin();
 $('haveSp').onchange = e => {
   haveSpotify = e.target.checked; spPreview = false; renderSpLogin();
